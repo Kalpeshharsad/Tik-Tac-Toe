@@ -40,14 +40,6 @@ post_install do |installer|
     target.build_configurations.each do |config|
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
       config.build_settings['SWIFT_VERSION'] = '5.0'
-
-      # permission_handler implementation
-      config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= [
-        '$(inherited)',
-        'PERMISSION_BLUETOOTH=1',
-        'PERMISSION_LOCATION=1',
-        'PERMISSION_NEARBY_WIFI_DEVICES=1'
-      ]
     end
   end
 end

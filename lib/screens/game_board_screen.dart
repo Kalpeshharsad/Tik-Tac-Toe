@@ -12,7 +12,7 @@ import 'package:kinetic_tictactoe/widgets/game_tile.dart';
 import 'package:kinetic_tictactoe/widgets/win_line_painter.dart';
 import 'package:kinetic_tictactoe/state/settings_state.dart';
 import 'package:kinetic_tictactoe/utils/sound_manager.dart';
-import 'package:kinetic_tictactoe/services/nearby_service.dart';
+import 'package:kinetic_tictactoe/services/peer_service.dart';
 
 class GameBoardScreen extends StatefulWidget {
   final bool vsAI;
@@ -55,14 +55,14 @@ class _GameBoardScreenState extends State<GameBoardScreen>
     final gs = context.read<GameState>();
     if (!gs.isMultiplayer) return;
 
-    final nearby = NearbyService();
+    final peerService = PeerService();
     
     // Send local moves
     gs.onMoveMade = (index) {
-      nearby.sendMove(index);
+      peerService.sendMessage({'type': 'move', 'index': index});
     };
 
-    nearby.onDataReceived = (data) {
+    peerService.onDataReceived = (data) {
       if (data['type'] == 'move') {
         final index = data['index'] as int;
         final settings = context.read<SettingsState>();
@@ -76,7 +76,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
       }
     };
 
-    nearby.onDisconnected = (id) {
+    peerService.onConnectionLost = () {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Opponent disconnected')),
@@ -549,6 +549,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
         Expanded(
           child: GestureDetector(
             onTap: () {
+              PeerService().stopAll();
               gs.disableMultiplayer();
               gs.resetAll();
               context.go('/');

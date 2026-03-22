@@ -66,26 +66,5 @@
 	<string>UIStatusBarStyleLightContent</string>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
-	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>This app needs Bluetooth to find and connect to other devices for multiplayer games.</string>
-	<key>NSBluetoothPeripheralUsageDescription</key>
-	<string>This app needs Bluetooth to find and connect to other devices for multiplayer games.</string>
-	<key>NSLocalNetworkUsageDescription</key>
-	<string>This app needs to use the local network to find and connect to other devices for multiplayer games.</string>
-	<key>NSBonjourServices</key>
-	<array>
-		<string>_kineticmp._tcp</string>
-		<string>_kineticmp._udp</string>
-	</array>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>bluetooth-central</string>
-		<string>bluetooth-peripheral</string>
-		<string>nearby-interaction</string>
-	</array>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>This app needs location access to find nearby players for local multiplayer.</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>This app needs location access to find nearby players for local multiplayer.</string>
 </dict>
 </plist>

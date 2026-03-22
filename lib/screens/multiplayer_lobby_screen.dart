@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinetic_tictactoe/theme/app_theme.dart';
 import 'package:kinetic_tictactoe/widgets/kinetic_app_bar.dart';
 import 'package:kinetic_tictactoe/widgets/bottom_nav_bar.dart';
-import 'package:kinetic_tictactoe/widgets/player_card.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:kinetic_tictactoe/services/nearby_service.dart';
+import 'package:kinetic_tictactoe/services/peer_service.dart';
 import 'package:provider/provider.dart';
 import 'package:kinetic_tictactoe/state/settings_state.dart';
 import 'package:kinetic_tictactoe/state/game_state.dart';
-import 'package:nearby_connections/nearby_connections.dart';
 
 class MultiplayerLobbyScreen extends StatefulWidget {
   const MultiplayerLobbyScreen({super.key});
@@ -21,11 +19,8 @@ class MultiplayerLobbyScreen extends StatefulWidget {
 
 class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen>
     with SingleTickerProviderStateMixin {
-  final _searchCtrl = TextEditingController();
+  final _codeCtrl = TextEditingController();
   late AnimationController _pingCtrl;
-  final Map<String, String> _discoveredDevices = {}; // ID -> Name
-  bool _isSearching = false;
-  final _nearbyService = NearbyService();
 
   @override
   void initState() {
@@ -35,233 +30,112 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen>
       duration: const Duration(milliseconds: 1000),
     );
 
-    // Set up callbacks
-    _nearbyService.onEndpointFound = (id, name) {
-      debugPrint('Endpoint found: $id - $name');
-      setState(() => _discoveredDevices[id] = name);
-    };
-    _nearbyService.onEndpointLost = (id) {
-      setState(() => _discoveredDevices.remove(id));
-    };
-    _nearbyService.onConnectionInitiated = (id, info) {
-      _showConnectionRequestDialog(id, info);
-    };
-    _nearbyService.onConnected = (id) {
-      final gameState = Provider.of<GameState>(context, listen: false);
-      // Host stays X, Joiner becomes O? 
-      // Actually nearby_connections doesn't tell us who is who easily, 
-      // but usually the advertiser is the host.
-      final mySign = _nearbyService.status == NearbyStatus.advertising ? 'X' : 'O';
-      gameState.setupMultiplayer(mySign);
-      
-      // Navigate to game
+    // Initial sync
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _syncPeerState();
+    });
+  }
+
+  void _syncPeerState() {
+    final svc = PeerService();
+    if (svc.status == PeerStatus.hosting || svc.status == PeerStatus.connecting) {
+      _pingCtrl.repeat(reverse: true);
+    } else {
+      _pingCtrl.stop();
+    }
+  }
+
+  void _stopAll() {
+    PeerService().stopAll();
+    _pingCtrl.stop();
+    setState(() {});
+  }
+
+  void _startHosting() {
+    if (PeerService().status != PeerStatus.idle) {
+      _stopAll();
+      return;
+    }
+
+    final username = context.read<SettingsState>().userName;
+    final svc = PeerService();
+    
+    svc.onConnectionEstablished = () {
+      final gameState = context.read<GameState>();
+      // Host is always X
+      gameState.setupMultiplayer('X');
       if (mounted) context.go('/play');
     };
+
+    svc.startHosting(username);
+    _syncPeerState();
+    setState(() {});
   }
 
-  bool _isHosting = false;
-  bool _isJoining = false;
-
-  Future<void> _stopAll() async {
-    _nearbyService.stopAll();
-    _pingCtrl.stop();
-    setState(() {
-      _isSearching = false;
-      _isHosting = false;
-      _isJoining = false;
-      _discoveredDevices.clear();
-    });
-    // Wait for native side to fully cycle
-    await Future.delayed(const Duration(milliseconds: 500));
-  }
-
-  Future<bool> _requestPermissions() async {
-    final bool isAndroid = Theme.of(context).platform == TargetPlatform.android;
-    
-    if (isAndroid) {
-      final permissions = [
-        Permission.location,
-        Permission.bluetoothScan,
-        Permission.bluetoothAdvertise,
-        Permission.bluetoothConnect,
-        Permission.nearbyWifiDevices,
-      ];
-      
-      await permissions.request();
-      // On Android, we'll try to proceed as long as Location is granted.
-      // Other permissions might report denied on older Android versions where they're not needed.
-      final locStatus = await Permission.location.status;
-      return locStatus.isGranted;
-    } else {
-      // iOS
-      final status = await Permission.bluetooth.request();
-      return status.isGranted;
-    }
-  }
-
-  Future<void> _startHosting() async {
-    if (_isHosting) {
-      await _stopAll();
-      return;
-    }
-    
-    if (!await _requestPermissions()) {
-      _showPermissionError();
-      return;
-    }
-
-    final username = Provider.of<SettingsState>(context, listen: false).userName;
-    try {
-      bool success = await _nearbyService.startAdvertising(username);
-      if (success) {
-        _pingCtrl.repeat(reverse: true);
-        setState(() {
-          _isHosting = true;
-          _isSearching = true;
-        });
-      } else {
-        _showError('Failed to start Host mode. Check Bluetooth.');
-      }
-    } catch (e) {
-      _showError('Discovery Error: $e');
-    }
-  }
-
-  Future<void> _startJoining() async {
-    if (_isJoining) {
-      await _stopAll();
-      return;
-    }
-    
-    if (!await _requestPermissions()) {
-      _showPermissionError();
-      return;
-    }
-
-    final username = Provider.of<SettingsState>(context, listen: false).userName;
-    try {
-      bool success = await _nearbyService.startDiscovery(username);
-      if (success) {
-        _pingCtrl.repeat(reverse: true);
-        setState(() {
-          _isJoining = true;
-          _isSearching = true;
-        });
-      } else {
-        _showError('Failed to start Join mode. Check Bluetooth.');
-      }
-    } catch (e) {
-      _showError('Discovery Error: $e');
-    }
-  }
-
-  void _showError(dynamic msg) {
-    if (mounted) {
-      final String text = msg is Exception ? msg.toString() : msg.toString();
+  void _startJoining() {
+    final code = _codeCtrl.text.trim().toUpperCase();
+    if (code.length != 6) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(text), backgroundColor: KColors.error),
+        const SnackBar(content: Text('Please enter a valid 6-character room code'), backgroundColor: KColors.error),
       );
+      return;
     }
-  }
 
-  void _showPermissionError() {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Permissions required for Local Multiplayer')),
-      );
+    if (PeerService().status != PeerStatus.idle) {
+      _stopAll();
+      return;
     }
-  }
 
-  void _showConnectionRequestDialog(String id, ConnectionInfo info) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: KColors.surfaceContainerHigh,
-        title: const Text('Connection Request'),
-        content: Text('Accept invitation from ${info.endpointName}?'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Nearby().rejectConnection(id);
-              Navigator.pop(ctx);
-            },
-            child: const Text('Reject'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              _nearbyService.acceptConnection(id);
-              Navigator.pop(ctx);
-            },
-            child: const Text('Accept'),
-          ),
-        ],
-      ),
-    );
+    final username = context.read<SettingsState>().userName;
+    final svc = PeerService();
+
+    svc.onConnectionEstablished = () {
+      final gameState = context.read<GameState>();
+      // Joiner is always O
+      gameState.setupMultiplayer('O');
+      if (mounted) context.go('/play');
+    };
+
+    svc.joinRoom(username, code);
+    _syncPeerState();
+    setState(() {});
   }
 
   @override
   void dispose() {
     _pingCtrl.dispose();
-    _searchCtrl.dispose();
+    _codeCtrl.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    // We listen to PeerService changes manually or use AnimatedBuilder
     return Scaffold(
       backgroundColor: KColors.surface,
       appBar: const KineticAppBar(),
-      body: CustomScrollView(
-        slivers: [
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                _buildMatchmakingCard(),
-                const SizedBox(height: 24),
-                _buildSearchBar(),
-                const SizedBox(height: 8),
-                _buildPlayersHeader(),
-                const SizedBox(height: 12),
-              ]),
-            ),
-          ),
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 140),
-            sliver: SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  if (index >= _discoveredDevices.length) return null;
-                  final id = _discoveredDevices.keys.elementAt(index);
-                  final name = _discoveredDevices[id]!;
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: PlayerCard(
-                      username: name,
-                      title: 'Nearby Device',
-                      level: 'P2P',
-                      isOnline: true,
-                      isElite: false,
-                      isOffline: false,
-                      onChallenge: () {
-                        final username = Provider.of<SettingsState>(context, listen: false).userName;
-                        _nearbyService.invite(id, username);
-                      },
-                    ),
-                  );
-                },
-                childCount: _discoveredDevices.length,
+      body: AnimatedBuilder(
+        animation: PeerService(),
+        builder: (context, _) {
+          final svc = PeerService();
+          return CustomScrollView(
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate([
+                    _buildMatchmakingCard(svc),
+                    const SizedBox(height: 32),
+                    if (svc.status == PeerStatus.hosting)
+                      _buildHostView(svc)
+                    else if (svc.status == PeerStatus.idle || svc.status == PeerStatus.connecting)
+                      _buildJoinView(svc),
+                  ]),
+                ),
               ),
-            ),
-          ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 32),
-              child: _buildLoadMore(),
-            ),
-          ),
-        ],
+            ],
+          );
+        },
       ),
       bottomNavigationBar: KineticBottomNavBar(
         currentIndex: 1,
@@ -279,15 +153,15 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen>
     required IconData icon,
     required String label,
   }) {
-    final color = isActive ? KColors.error : (isOtherActive ? KColors.surfaceContainerHigh : KColors.tertiary);
-    final onColor = isActive ? Colors.white : (isOtherActive ? KColors.onSurfaceVariant : KColors.onTertiary);
+    final color = isActive ? KColors.error : (isOtherActive ? KColors.surfaceContainerHigh : KColors.primary);
+    final onColor = isActive ? Colors.white : (isOtherActive ? KColors.onSurfaceVariant : KColors.surfaceContainerHigh);
 
     return GestureDetector(
       onTap: isOtherActive ? null : onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
-        width: 80,
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(KRadius.md),
@@ -299,17 +173,18 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen>
             ),
           ] : [],
         ),
-        child: Column(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(isActive ? Icons.stop_rounded : icon, color: onColor, size: 20),
-            const SizedBox(height: 4),
+            Icon(isActive ? Icons.cancel_rounded : icon, color: onColor, size: 20),
+            const SizedBox(width: 8),
             Text(
-              isActive ? 'STOP' : label,
+              isActive ? 'CANCEL MATCHMAKING' : label,
               style: GoogleFonts.plusJakartaSans(
-                fontSize: 9,
+                fontSize: 12,
                 fontWeight: FontWeight.w800,
                 color: onColor,
-                letterSpacing: 0.5,
+                letterSpacing: 1,
               ),
             ),
           ],
@@ -318,7 +193,14 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen>
     );
   }
 
-  Widget _buildMatchmakingCard() {
+  Widget _buildMatchmakingCard(PeerService svc) {
+    final isHosting = svc.status == PeerStatus.hosting;
+    final isConnecting = svc.status == PeerStatus.connecting;
+
+    String titleText = 'Online\nMatchmaking';
+    if (isHosting) titleText = 'Host Mode\nWaiting...';
+    if (isConnecting) titleText = 'Join Mode\nConnecting...';
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -337,76 +219,64 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen>
               ),
             ),
           ),
-          Row(
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              Text(
+                'MULTIPLAYER LOBBY',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: KColors.onSurfaceVariant,
+                  letterSpacing: 2,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                titleText,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: KColors.onSurface,
+                  height: 1.2,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: 12),
+              AnimatedBuilder(
+                animation: _pingCtrl,
+                builder: (_, __) => Row(
                   children: [
-                    Text(
-                      'MULTIPLAYER LOBBY',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: KColors.onSurfaceVariant,
-                        letterSpacing: 2,
+                    Container(
+                      width: 10, height: 10,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: (isHosting || isConnecting) ? KColors.primary : KColors.onSurfaceVariant.withValues(alpha: 0.3),
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(width: 8),
                     Text(
-                      _isHosting ? 'Host Mode\nWaiting...' : (_isJoining ? 'Join Mode\nScanning...' : 'Start Local\nMatchmaking'),
+                      (isHosting || isConnecting) ? 'ACTIVE' : 'IDLE',
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        color: KColors.onSurface,
-                        height: 1.2,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    AnimatedBuilder(
-                      animation: _pingCtrl,
-                      builder: (_, __) => Row(
-                        children: [
-                          Container(
-                            width: 10, height: 10,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: (_isSearching) ? KColors.primary : KColors.onSurfaceVariant.withValues(alpha: 0.3),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            _isSearching ? 'ACTIVE' : 'IDLE',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: _isSearching ? KColors.primary : KColors.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: (isHosting || isConnecting) ? KColors.primary : KColors.onSurfaceVariant,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 16),
-              Column(
+              const SizedBox(height: 24),
+              Row(
                 children: [
-                  _buildMatchmakingButton(
-                    onTap: _startHosting,
-                    isActive: _isHosting,
-                    isOtherActive: _isJoining,
-                    icon: Icons.broadcast_on_personal_rounded,
-                    label: 'HOST',
-                  ),
-                  const SizedBox(height: 12),
-                  _buildMatchmakingButton(
-                    onTap: _startJoining,
-                    isActive: _isJoining,
-                    isOtherActive: _isHosting,
-                    icon: Icons.radar_rounded,
-                    label: 'JOIN',
+                  Expanded(
+                    child: _buildMatchmakingButton(
+                      onTap: _startHosting,
+                      isActive: isHosting,
+                      isOtherActive: isConnecting,
+                      icon: Icons.add_circle_outline_rounded,
+                      label: 'HOST GAME',
+                    ),
                   ),
                 ],
               ),
@@ -417,103 +287,116 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen>
     );
   }
 
-  Widget _buildSearchBar() {
-    return Row(
+  Widget _buildHostView(PeerService svc) {
+    return Column(
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'FIND PLAYERS',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: KColors.onSurfaceVariant,
-                  letterSpacing: 2,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Container(
-                decoration: BoxDecoration(
-                  color: KColors.surfaceContainerHigh,
-                  borderRadius: BorderRadius.circular(KRadius.md),
-                ),
-                child: TextField(
-                  controller: _searchCtrl,
-                  style: GoogleFonts.plusJakartaSans(
-                    color: KColors.onSurface,
-                    fontSize: 14,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: 'Search by username or ID...',
-                    hintStyle: GoogleFonts.plusJakartaSans(
-                      color: KColors.onSurfaceVariant.withValues(alpha: 0.5),
-                      fontSize: 14,
-                    ),
-                    prefixIcon: const Icon(Icons.search_rounded,
-                        color: KColors.onSurfaceVariant, size: 20),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 14),
-                  ),
-                ),
-              ),
-            ],
+        Text(
+          'YOUR ROOM CODE',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            color: KColors.onSurfaceVariant,
+            letterSpacing: 2,
           ),
         ),
-        const SizedBox(width: 10),
-        Padding(
-          padding: const EdgeInsets.only(top: 26),
-          child: Container(
-            width: 52, height: 52,
-            decoration: BoxDecoration(
-              color: KColors.surfaceContainerHigh,
-              borderRadius: BorderRadius.circular(KRadius.md),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+          decoration: BoxDecoration(
+            color: KColors.surfaceContainerHigh,
+            borderRadius: BorderRadius.circular(KRadius.lg),
+            border: Border.all(color: KColors.primary.withValues(alpha: 0.3), width: 2),
+            boxShadow: [
+              BoxShadow(
+                color: KColors.primary.withValues(alpha: 0.1),
+                blurRadius: 20,
+                spreadRadius: 2,
+              )
+            ]
+          ),
+          child: Text(
+            svc.currentRoomCode ?? '------',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 48,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 8,
+              color: KColors.onSurface,
             ),
-            child: const Icon(Icons.tune_rounded,
-                color: KColors.onSurfaceVariant, size: 22),
           ),
         ),
+        const SizedBox(height: 16),
+        Text(
+          'Share this code with your opponent.',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 14,
+            color: KColors.onSurfaceVariant,
+          ),
+        )
       ],
     );
   }
 
-  Widget _buildPlayersHeader() {
-    return Text(
-      'NEARBY DEVICES (${_discoveredDevices.length})',
-      style: GoogleFonts.plusJakartaSans(
-        fontSize: 10,
-        fontWeight: FontWeight.w700,
-        color: KColors.onSurfaceVariant,
-        letterSpacing: 2,
-      ),
-    );
-  }
-
-  Widget _buildLoadMore() {
-    return GestureDetector(
-      onTap: () {},
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        child: Column(
-          children: [
-            Text(
-              'LOAD MORE PLAYERS',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                color: KColors.onSurfaceVariant,
-                letterSpacing: 2,
-              ),
-            ),
-            const SizedBox(height: 4),
-            const Icon(Icons.expand_more_rounded,
-                color: KColors.onSurfaceVariant, size: 28),
-          ],
+  Widget _buildJoinView(PeerService svc) {
+    final isConnecting = svc.status == PeerStatus.connecting;
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'JOIN A GAME',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            color: KColors.onSurfaceVariant,
+            letterSpacing: 2,
+          ),
         ),
-      ),
+        const SizedBox(height: 16),
+        Container(
+          decoration: BoxDecoration(
+            color: KColors.surfaceContainerHigh,
+            borderRadius: BorderRadius.circular(KRadius.md),
+            border: Border.all(
+              color: KColors.outlineVariant.withValues(alpha: 0.2),
+            )
+          ),
+          child: TextField(
+            controller: _codeCtrl,
+            enabled: !isConnecting,
+            textCapitalization: TextCapitalization.characters,
+            inputFormatters: [
+              LengthLimitingTextInputFormatter(6),
+              FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
+            ],
+            style: GoogleFonts.plusJakartaSans(
+              color: KColors.onSurface,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 8,
+            ),
+            textAlign: TextAlign.center,
+            decoration: InputDecoration(
+              hintText: 'ENTER CODE',
+              hintStyle: GoogleFonts.plusJakartaSans(
+                color: KColors.onSurfaceVariant.withValues(alpha: 0.3),
+                fontSize: 24,
+                letterSpacing: 4,
+              ),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16, vertical: 24),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        _buildMatchmakingButton(
+          onTap: _startJoining,
+          isActive: isConnecting,
+          isOtherActive: false,
+          icon: Icons.login_rounded,
+          label: 'JOIN GAME',
+        ),
+      ],
     );
   }
-
 }

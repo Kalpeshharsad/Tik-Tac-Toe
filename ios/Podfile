@@ -20,7 +20,7 @@ def flutter_root
   raise "FLUTTER_ROOT not found in Generated.xcconfig. Try deleting Generated.xcconfig, then run flutter pub get"
 end
 
-require File.expand_path(File.join('..', 'Flutter', 'podhelper.rb'), __FILE__)
+require File.expand_path(File.join(flutter_root, 'packages', 'flutter_tools', 'bin', 'podhelper.rb'))
 
 target 'Runner' do
   use_frameworks! :linkage => :static

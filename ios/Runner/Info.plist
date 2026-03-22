@@ -77,5 +77,9 @@
 		<string>_kinetic._tcp</string>
 		<string>_kinetic._udp</string>
 	</array>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app needs location access to find nearby players for local multiplayer.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>This app needs location access to find nearby players for local multiplayer.</string>
 </dict>
 </plist>

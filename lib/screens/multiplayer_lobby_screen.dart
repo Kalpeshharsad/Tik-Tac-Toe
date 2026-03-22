@@ -74,17 +74,27 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen>
   }
 
   Future<bool> _requestPermissions() async {
-    final permissions = [
-      Permission.location,
-      Permission.bluetooth,
-      Permission.bluetoothScan,
-      Permission.bluetoothAdvertise,
-      Permission.bluetoothConnect,
-      Permission.nearbyWifiDevices,
-    ];
+    final bool isAndroid = Theme.of(context).platform == TargetPlatform.android;
     
-    Map<Permission, PermissionStatus> statuses = await permissions.request();
-    return !statuses.values.any((s) => s.isDenied);
+    if (isAndroid) {
+      final permissions = [
+        Permission.location,
+        Permission.bluetoothScan,
+        Permission.bluetoothAdvertise,
+        Permission.bluetoothConnect,
+        Permission.nearbyWifiDevices,
+      ];
+      
+      await permissions.request();
+      // On Android, we'll try to proceed as long as Location is granted.
+      // Other permissions might report denied on older Android versions where they're not needed.
+      final locStatus = await Permission.location.status;
+      return locStatus.isGranted;
+    } else {
+      // iOS
+      final status = await Permission.bluetooth.request();
+      return status.isGranted;
+    }
   }
 
   Future<void> _startHosting() async {
@@ -99,14 +109,19 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen>
     }
 
     final username = Provider.of<SettingsState>(context, listen: false).userName;
-    bool success = await _nearbyService.startAdvertising(username);
-    
-    if (success) {
-      _pingCtrl.repeat(reverse: true);
-      setState(() {
-        _isHosting = true;
-        _isSearching = true;
-      });
+    try {
+      bool success = await _nearbyService.startAdvertising(username);
+      if (success) {
+        _pingCtrl.repeat(reverse: true);
+        setState(() {
+          _isHosting = true;
+          _isSearching = true;
+        });
+      } else {
+        _showError('Failed to start Host mode. Check Bluetooth.');
+      }
+    } catch (e) {
+      _showError('Discovery Error: $e');
     }
   }
 
@@ -122,14 +137,27 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen>
     }
 
     final username = Provider.of<SettingsState>(context, listen: false).userName;
-    bool success = await _nearbyService.startDiscovery(username);
-    
-    if (success) {
-      _pingCtrl.repeat(reverse: true);
-      setState(() {
-        _isJoining = true;
-        _isSearching = true;
-      });
+    try {
+      bool success = await _nearbyService.startDiscovery(username);
+      if (success) {
+        _pingCtrl.repeat(reverse: true);
+        setState(() {
+          _isJoining = true;
+          _isSearching = true;
+        });
+      } else {
+        _showError('Failed to start Join mode. Check Bluetooth.');
+      }
+    } catch (e) {
+      _showError('Discovery Error: $e');
+    }
+  }
+
+  void _showError(String msg) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg), backgroundColor: KColors.error),
+      );
     }
   }
 

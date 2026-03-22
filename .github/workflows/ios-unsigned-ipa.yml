@@ -10,7 +10,6 @@ on:
 jobs:
   build:
     name: Build Unsigned IPA
-    # macos-latest is now arm64 (Apple Silicon)
     runs-on: macos-latest
     
     steps:
@@ -18,28 +17,40 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Flutter
-        # Using @v2 is fine, but pinning a specific version 
-        # avoids the "Unable to determine version" error.
         uses: subosito/flutter-action@v2
         with:
+          flutter-version: 'latest'
           channel: 'stable'
-          flutter-version: '3.24.0' # Pinned to a known stable version
           cache: true
 
       - name: Get dependencies
         run: flutter pub get
 
-      - name: Build Flutter iOS (no-codesign)
+      - name: Build Flutter iOS (Prepare)
         run: |
-          flutter build ios --release --no-codesign
+          # This command may fail due to no codesigning team, but it prepares the environment.
+          flutter build ios --release --no-codesign || true
+
+      - name: Xcodebuild Archive (Unsigned)
+        run: |
+          cd ios
+          xcodebuild archive \
+            -workspace Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -sdk iphoneos \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            AD_HOC_CODE_SIGNING_ALLOWED=NO \
+            -archivePath ../build/ios/Runner.xcarchive
 
       - name: Create Unsigned IPA
         run: |
           mkdir -p build/ipa/Payload
-          # Search for the .app bundle in the build output
-          APP_PATH=$(find build/ios/iphoneos -name "*.app" | head -n 1)
+          APP_PATH=$(find build/ios/Runner.xcarchive/Products -name "*.app" | head -n 1)
           if [ -z "$APP_PATH" ]; then
-            echo "❌ Error: .app not found"
+            echo "❌ Error: .app not found in archive"
             exit 1
           fi
           cp -r "$APP_PATH" build/ipa/Payload/

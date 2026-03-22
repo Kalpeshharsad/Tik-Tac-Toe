@@ -5,6 +5,12 @@ import 'package:kinetic_tictactoe/theme/app_theme.dart';
 import 'package:kinetic_tictactoe/widgets/kinetic_app_bar.dart';
 import 'package:kinetic_tictactoe/widgets/bottom_nav_bar.dart';
 import 'package:kinetic_tictactoe/widgets/player_card.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:kinetic_tictactoe/services/nearby_service.dart';
+import 'package:provider/provider.dart';
+import 'package:kinetic_tictactoe/state/settings_state.dart';
+import 'package:kinetic_tictactoe/state/game_state.dart';
+import 'package:nearby_connections/nearby_connections.dart';
 
 class MultiplayerLobbyScreen extends StatefulWidget {
   const MultiplayerLobbyScreen({super.key});
@@ -17,57 +23,9 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen>
     with SingleTickerProviderStateMixin {
   final _searchCtrl = TextEditingController();
   late AnimationController _pingCtrl;
-
-  final List<Map<String, dynamic>> _players = [
-    {
-      'username': 'CyberLuna_99',
-      'title': 'Master Tactician',
-      'level': 'LVL 42',
-      'isOnline': true,
-      'isElite': false,
-      'isOffline': false,
-    },
-    {
-      'username': 'Jax_Volt',
-      'title': 'Last played 2m ago',
-      'level': 'LVL 18',
-      'isOnline': true,
-      'isElite': false,
-      'isOffline': false,
-    },
-    {
-      'username': 'NeoKinetiX',
-      'title': 'Top 1% Global Rank',
-      'level': 'PRO',
-      'isOnline': true,
-      'isElite': true,
-      'isOffline': false,
-    },
-    {
-      'username': 'Zora_The_Grid',
-      'title': 'Win Streak: 5',
-      'level': 'LVL 67',
-      'isOnline': true,
-      'isElite': false,
-      'isOffline': false,
-    },
-    {
-      'username': 'Sparky_Rook',
-      'title': 'Offline',
-      'level': 'LVL 04',
-      'isOnline': false,
-      'isElite': false,
-      'isOffline': true,
-    },
-    {
-      'username': 'Silent_Ghost',
-      'title': 'Defense Specialist',
-      'level': 'LVL 24',
-      'isOnline': true,
-      'isElite': false,
-      'isOffline': false,
-    },
-  ];
+  final Map<String, String> _discoveredDevices = {}; // ID -> Name
+  bool _isSearching = false;
+  final _nearbyService = NearbyService();
 
   @override
   void initState() {
@@ -75,7 +33,100 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen>
     _pingCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1000),
-    )..repeat(reverse: true);
+    );
+
+    // Set up callbacks
+    _nearbyService.onEndpointFound = (id, name) {
+      debugPrint('Endpoint found: $id - $name');
+      setState(() => _discoveredDevices[id] = name);
+    };
+    _nearbyService.onEndpointLost = (id) {
+      setState(() => _discoveredDevices.remove(id));
+    };
+    _nearbyService.onConnectionInitiated = (id, info) {
+      _showConnectionRequestDialog(id, info);
+    };
+    _nearbyService.onConnected = (id) {
+      final gameState = Provider.of<GameState>(context, listen: false);
+      // Host stays X, Joiner becomes O? 
+      // Actually nearby_connections doesn't tell us who is who easily, 
+      // but usually the advertiser is the host.
+      final mySign = _nearbyService.status == NearbyStatus.advertising ? 'X' : 'O';
+      gameState.setupMultiplayer(mySign);
+      
+      // Navigate to game
+      if (mounted) context.go('/play');
+    };
+  }
+
+  Future<void> _toggleMatchmaking() async {
+    if (_isSearching) {
+      _nearbyService.stopAll();
+      _pingCtrl.stop();
+      setState(() {
+        _isSearching = false;
+        _discoveredDevices.clear();
+      });
+      return;
+    }
+
+    // Request permissions
+    final permissions = [
+      Permission.location,
+      Permission.bluetooth,
+      Permission.bluetoothScan,
+      Permission.bluetoothAdvertise,
+      Permission.bluetoothConnect,
+    ];
+    
+    Map<Permission, PermissionStatus> statuses = await permissions.request();
+    if (!mounted) return;
+    
+    if (statuses.values.any((s) => s.isDenied)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Permissions required for Local Multiplayer')),
+        );
+      }
+      return;
+    }
+
+    final username = Provider.of<SettingsState>(context, listen: false).userName;
+    
+    // Start both for bidirectional discovery (simpler for users)
+    await _nearbyService.startAdvertising(username);
+    await _nearbyService.startDiscovery(username);
+
+    _pingCtrl.repeat(reverse: true);
+    setState(() => _isSearching = true);
+  }
+
+  void _showConnectionRequestDialog(String id, ConnectionInfo info) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: KColors.surfaceContainerHigh,
+        title: const Text('Connection Request'),
+        content: Text('Accept invitation from ${info.endpointName}?'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Nearby().rejectConnection(id);
+              Navigator.pop(ctx);
+            },
+            child: const Text('Reject'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              _nearbyService.acceptConnection(id);
+              Navigator.pop(ctx);
+            },
+            child: const Text('Accept'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -110,23 +161,26 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen>
             sliver: SliverList(
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
-                  if (index >= _players.length) return null;
-                  final p = _players[index];
+                  if (index >= _discoveredDevices.length) return null;
+                  final id = _discoveredDevices.keys.elementAt(index);
+                  final name = _discoveredDevices[id]!;
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 12),
                     child: PlayerCard(
-                      username: p['username'] as String,
-                      title: p['title'] as String,
-                      level: p['level'] as String,
-                      isOnline: p['isOnline'] as bool,
-                      isElite: p['isElite'] as bool,
-                      isOffline: p['isOffline'] as bool,
-                      onChallenge: () => _showChallengeDialog(
-                          context, p['username'] as String),
+                      username: name,
+                      title: 'Nearby Device',
+                      level: 'P2P',
+                      isOnline: true,
+                      isElite: false,
+                      isOffline: false,
+                      onChallenge: () {
+                        final username = Provider.of<SettingsState>(context, listen: false).userName;
+                        _nearbyService.invite(id, username);
+                      },
                     ),
                   );
                 },
-                childCount: _players.length,
+                childCount: _discoveredDevices.length,
               ),
             ),
           ),
@@ -184,7 +238,7 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen>
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'Searching for\nOpponent...',
+                      _isSearching ? 'Searching for\nOpponent...' : 'Start Local\nMultiplayer',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
@@ -219,7 +273,7 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen>
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'ETA: 0:42',
+                            _isSearching ? 'ACTIVE' : 'READY',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
@@ -234,16 +288,16 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen>
               ),
               const SizedBox(width: 16),
               GestureDetector(
-                onTap: () {},
+                onTap: _toggleMatchmaking,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                       horizontal: 16, vertical: 14),
                   decoration: BoxDecoration(
-                    color: KColors.tertiary,
+                    color: _isSearching ? KColors.error : KColors.tertiary,
                     borderRadius: BorderRadius.circular(KRadius.md),
                     boxShadow: [
                       BoxShadow(
-                        color: KColors.tertiary.withValues(alpha: 0.2),
+                        color: (_isSearching ? KColors.error : KColors.tertiary).withValues(alpha: 0.2),
                         blurRadius: 16,
                         spreadRadius: 1,
                       ),
@@ -251,16 +305,16 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen>
                   ),
                   child: Column(
                     children: [
-                      const Icon(Icons.add_box_outlined,
-                          color: KColors.onTertiary, size: 20),
+                      Icon(_isSearching ? Icons.stop_rounded : Icons.radar_rounded,
+                          color: _isSearching ? Colors.white : KColors.onTertiary, size: 20),
                       const SizedBox(height: 4),
                       Text(
-                        'PRIVATE\nROOM',
+                        _isSearching ? 'STOP' : 'GO LIVE',
                         textAlign: TextAlign.center,
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 9,
                           fontWeight: FontWeight.w800,
-                          color: KColors.onTertiary,
+                          color: _isSearching ? Colors.white : KColors.onTertiary,
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -339,7 +393,7 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen>
 
   Widget _buildPlayersHeader() {
     return Text(
-      'ACTIVE NOW (142)',
+      'NEARBY DEVICES (${_discoveredDevices.length})',
       style: GoogleFonts.plusJakartaSans(
         fontSize: 10,
         fontWeight: FontWeight.w700,
@@ -374,56 +428,4 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen>
     );
   }
 
-  void _showChallengeDialog(BuildContext context, String username) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: KColors.surfaceContainerHigh,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(KRadius.lg)),
-        title: Text(
-          'Challenge $username?',
-          style: GoogleFonts.plusJakartaSans(
-            fontWeight: FontWeight.w800,
-            color: KColors.onSurface,
-          ),
-        ),
-        content: Text(
-          'This feature requires a live server. For now, play vs AI!',
-          style: GoogleFonts.plusJakartaSans(
-            color: KColors.onSurfaceVariant,
-            fontSize: 14,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel',
-                style: GoogleFonts.plusJakartaSans(
-                    color: KColors.onSurfaceVariant)),
-          ),
-          GestureDetector(
-            onTap: () {
-              Navigator.pop(ctx);
-              context.go('/play');
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: KColors.tertiary,
-                borderRadius: BorderRadius.circular(KRadius.md),
-              ),
-              child: Text(
-                'Play vs AI',
-                style: GoogleFonts.plusJakartaSans(
-                  fontWeight: FontWeight.w700,
-                  color: KColors.onTertiary,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

@@ -14,6 +14,11 @@ class GameState extends ChangeNotifier {
   int _drawCount = 0;
   int _moveCount = 0;
   bool _gameOver = false;
+  
+  // Multiplayer
+  bool _isMultiplayer = false;
+  String? _mySign; // 'X' or 'O'
+  void Function(int index)? onMoveMade; // Callback to send move over P2P
 
   // Timer
   int _elapsedSeconds = 0;
@@ -30,6 +35,9 @@ class GameState extends ChangeNotifier {
   bool get gameOver => _gameOver;
   int get elapsedSeconds => _elapsedSeconds;
   bool get isDraw => _winner == 'DRAW';
+  bool get isMultiplayer => _isMultiplayer;
+  String? get mySign => _mySign;
+  bool get isMyTurn => !_isMultiplayer || (_currentPlayer == _mySign);
 
   // ── Win conditions ────────────────────────────────────────────────────────
   static const List<List<int>> _winLines = [
@@ -39,19 +47,41 @@ class GameState extends ChangeNotifier {
   ];
 
   // ── Actions ───────────────────────────────────────────────────────────────
-  bool makeMove(int index, {bool hapticsEnabled = true}) {
+  bool makeMove(int index, {bool hapticsEnabled = true, bool isRemote = false}) {
     if (_board[index] != null || _gameOver) return false;
+    
+    // In multiplayer, only allow local player to move on their turn
+    if (_isMultiplayer && !isRemote && _currentPlayer != _mySign) return false;
+
     _board[index] = _currentPlayer;
     _moveCount++;
     if (hapticsEnabled) {
       HapticFeedback.lightImpact();
     }
     _checkResult();
+    
+    // Notify multiplayer service if this was a local move
+    if (_isMultiplayer && !isRemote) {
+      onMoveMade?.call(index);
+    }
+
     if (!_gameOver) {
       _currentPlayer = _currentPlayer == 'X' ? 'O' : 'X';
     }
     notifyListeners();
     return true;
+  }
+
+  void setupMultiplayer(String mySign) {
+    _isMultiplayer = true;
+    _mySign = mySign;
+    resetAll();
+  }
+
+  void disableMultiplayer() {
+    _isMultiplayer = false;
+    _mySign = null;
+    onMoveMade = null;
   }
 
   void _checkResult() {

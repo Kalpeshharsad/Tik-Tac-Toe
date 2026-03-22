@@ -12,6 +12,7 @@ import 'package:kinetic_tictactoe/widgets/game_tile.dart';
 import 'package:kinetic_tictactoe/widgets/win_line_painter.dart';
 import 'package:kinetic_tictactoe/state/settings_state.dart';
 import 'package:kinetic_tictactoe/utils/sound_manager.dart';
+import 'package:kinetic_tictactoe/services/nearby_service.dart';
 
 class GameBoardScreen extends StatefulWidget {
   final bool vsAI;
@@ -46,7 +47,49 @@ class _GameBoardScreenState extends State<GameBoardScreen>
     // Start timer
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _startTimer();
+      _setupMultiplayer();
     });
+  }
+
+  void _setupMultiplayer() {
+    final gs = context.read<GameState>();
+    if (!gs.isMultiplayer) return;
+
+    final nearby = NearbyService();
+    
+    // Send local moves
+    gs.onMoveMade = (index) {
+      nearby.sendMove(index);
+    };
+
+    nearby.onDataReceived = (data) {
+      if (data['type'] == 'move') {
+        final index = data['index'] as int;
+        final settings = context.read<SettingsState>();
+        gs.makeMove(index, hapticsEnabled: settings.hapticsEnabled, isRemote: true);
+        if (settings.soundFxEnabled) SoundManager.instance.playMove();
+        if (gs.gameOver) {
+          _onGameOver(gs, settings);
+        }
+      } else if (data['type'] == 'emoji') {
+        _showRemoteEmoji(data['emoji'] as String);
+      }
+    };
+
+    nearby.onDisconnected = (id) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Opponent disconnected')),
+        );
+        context.go('/lobby');
+      }
+    };
+  }
+
+  void _showRemoteEmoji(String emoji) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Opponent says: $emoji'), duration: const Duration(seconds: 1)),
+    );
   }
 
   void _startTimer() {
@@ -69,6 +112,10 @@ class _GameBoardScreenState extends State<GameBoardScreen>
     final gs = context.read<GameState>();
     final settings = context.read<SettingsState>();
     if (gs.gameOver) return;
+
+    // Block input if not my turn in multiplayer
+    if (gs.isMultiplayer && !gs.isMyTurn) return;
+    
     if (widget.vsAI && gs.currentPlayer == 'O') return;
 
     final moved = gs.makeMove(index, hapticsEnabled: settings.hapticsEnabled);
@@ -162,7 +209,6 @@ class _GameBoardScreenState extends State<GameBoardScreen>
             ),
             child: Stack(
               children: [
-                // Left accent bar
                 Positioned(
                   left: 0, top: 0, bottom: 0,
                   child: Container(
@@ -176,7 +222,6 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                     ),
                   ),
                 ),
-                // Online indicator
                 Positioned(
                   top: 0, right: 0,
                   child: _PulsingStatusDot(color: colorScheme.tertiary),
@@ -228,7 +273,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
           ),
         ),
         const SizedBox(width: 12),
-        // Player 2 (O) — active state
+        // Player 2 (O)
         Expanded(
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 250),
@@ -254,7 +299,6 @@ class _GameBoardScreenState extends State<GameBoardScreen>
             ),
             child: Stack(
               children: [
-                // Right accent bar
                 Positioned(
                   right: 0, top: 0, bottom: 0,
                   child: Container(
@@ -331,7 +375,6 @@ class _GameBoardScreenState extends State<GameBoardScreen>
   Widget _buildControls(GameState gs, ColorScheme colorScheme) {
     return Row(
       children: [
-        // Undo + Timer
         GestureDetector(
           onTap: () {
             gs.resetBoard();
@@ -360,7 +403,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'REMAINING',
+              'ELAPSED',
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
@@ -506,6 +549,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
         Expanded(
           child: GestureDetector(
             onTap: () {
+              gs.disableMultiplayer();
               gs.resetAll();
               context.go('/');
             },

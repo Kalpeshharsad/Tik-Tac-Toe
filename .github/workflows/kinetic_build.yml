@@ -1,4 +1,4 @@
-name: iOS Unsigned Build
+name: KINETIC Cross-Platform Build
 
 on:
   push:
@@ -8,10 +8,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    name: Build Unsigned IPA
+  build_ios:
+    name: Build Unsigned IPA (iOS)
     runs-on: macos-latest
-    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -27,7 +26,6 @@ jobs:
 
       - name: Build Flutter iOS (Prepare)
         run: |
-          # This command may fail due to no codesigning team, but it prepares the environment.
           flutter build ios --release --no-codesign || true
 
       - name: Xcodebuild Archive (Unsigned)
@@ -57,9 +55,41 @@ jobs:
           zip -r ../KINETIC-unsigned.ipa Payload/
           echo "✅ IPA created: build/KINETIC-unsigned.ipa"
           
-      - name: Upload Artifact
+      - name: Upload iOS Artifact
         uses: actions/upload-artifact@v4
         with:
           name: KINETIC-unsigned-ipa
           path: build/KINETIC-unsigned.ipa
+          retention-days: 7
+
+  build_android:
+    name: Build APK (Android)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build Android APK
+        run: flutter build apk --release
+
+      - name: Upload Android Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: KINETIC-android-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
           retention-days: 7

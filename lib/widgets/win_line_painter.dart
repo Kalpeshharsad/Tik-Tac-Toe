@@ -47,7 +47,7 @@ class WinLinePainter extends CustomPainter {
 
     // Solid core
     final corePaint = Paint()
-      ..color = color.withOpacity(0.9)
+      ..color = color.withValues(alpha: 0.9)
       ..strokeWidth = 3
       ..strokeCap = StrokeCap.round;
     canvas.drawLine(start, current, corePaint);

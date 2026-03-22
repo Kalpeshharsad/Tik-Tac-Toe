@@ -61,8 +61,8 @@ class _GameTileState extends State<GameTile>
     Color glowColor = Colors.transparent;
     if (widget.isWinning) {
       glowColor = isX
-          ? KColors.primary.withOpacity(0.25)
-          : KColors.secondary.withOpacity(0.25);
+          ? KColors.primary.withValues(alpha: 0.25)
+          : KColors.secondary.withValues(alpha: 0.25);
     }
 
     return GestureDetector(
@@ -72,8 +72,8 @@ class _GameTileState extends State<GameTile>
         decoration: BoxDecoration(
           color: widget.isWinning
               ? (isX
-                  ? KColors.primary.withOpacity(0.08)
-                  : KColors.secondary.withOpacity(0.08))
+                  ? KColors.primary.withValues(alpha: 0.08)
+                  : KColors.secondary.withValues(alpha: 0.08))
               : KColors.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(KRadius.md),
           boxShadow: widget.isWinning
@@ -86,7 +86,7 @@ class _GameTileState extends State<GameTile>
                 ]
               : [],
           border: Border.all(
-            color: KColors.outlineVariant.withOpacity(0.08),
+            color: KColors.outlineVariant.withValues(alpha: 0.08),
             width: 1,
           ),
         ),

@@ -163,7 +163,7 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen>
               width: 160, height: 160,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: KColors.primary.withOpacity(0.08),
+                color: KColors.primary.withValues(alpha: 0.08),
               ),
             ),
           ),
@@ -205,7 +205,7 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen>
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   color: KColors.primary
-                                      .withOpacity(0.3 * _pingCtrl.value),
+                                      .withValues(alpha: 0.3 * _pingCtrl.value),
                                 ),
                               ),
                               Container(
@@ -243,7 +243,7 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen>
                     borderRadius: BorderRadius.circular(KRadius.md),
                     boxShadow: [
                       BoxShadow(
-                        color: KColors.tertiary.withOpacity(0.2),
+                        color: KColors.tertiary.withValues(alpha: 0.2),
                         blurRadius: 16,
                         spreadRadius: 1,
                       ),
@@ -306,7 +306,7 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen>
                   decoration: InputDecoration(
                     hintText: 'Search by username or ID...',
                     hintStyle: GoogleFonts.plusJakartaSans(
-                      color: KColors.onSurfaceVariant.withOpacity(0.5),
+                      color: KColors.onSurfaceVariant.withValues(alpha: 0.5),
                       fontSize: 14,
                     ),
                     prefixIcon: const Icon(Icons.search_rounded,

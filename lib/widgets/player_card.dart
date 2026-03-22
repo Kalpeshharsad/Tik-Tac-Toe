@@ -25,11 +25,11 @@ class PlayerCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bgColor = isElite
-        ? KColors.primary.withOpacity(0.12)
+        ? KColors.primary.withValues(alpha: 0.12)
         : KColors.surfaceContainerLow;
     final borderColor = isElite
-        ? KColors.primary.withOpacity(0.25)
-        : Colors.white.withOpacity(0.05);
+        ? KColors.primary.withValues(alpha: 0.25)
+        : Colors.white.withValues(alpha: 0.05);
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -87,7 +87,7 @@ class PlayerCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: isElite
                       ? KColors.primary
-                      : KColors.primary.withOpacity(0.12),
+                      : KColors.primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(KRadius.full),
                 ),
                 child: Text(
@@ -147,7 +147,7 @@ class PlayerCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
                   color: isOffline
-                      ? KColors.surfaceContainerHighest.withOpacity(0.5)
+                      ? KColors.surfaceContainerHighest.withValues(alpha: 0.5)
                       : (isElite
                           ? KColors.primary
                           : KColors.surfaceBright),
@@ -155,7 +155,7 @@ class PlayerCard extends StatelessWidget {
                   border: isOffline || isElite
                       ? null
                       : Border.all(
-                          color: KColors.outlineVariant.withOpacity(0.2),
+                          color: KColors.outlineVariant.withValues(alpha: 0.2),
                           width: 1,
                         ),
                 ),
@@ -169,7 +169,7 @@ class PlayerCard extends StatelessWidget {
                     fontWeight: FontWeight.w800,
                     letterSpacing: 1.2,
                     color: isOffline
-                        ? KColors.onSurfaceVariant.withOpacity(0.4)
+                        ? KColors.onSurfaceVariant.withValues(alpha: 0.4)
                         : (isElite ? KColors.onPrimary : KColors.primary),
                   ),
                 ),

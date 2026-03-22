@@ -36,7 +36,7 @@ class KineticAppBar extends StatelessWidget implements PreferredSizeWidget {
                         color: KColors.surfaceContainerHigh,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: KColors.outlineVariant.withOpacity(0.15),
+                          color: KColors.outlineVariant.withValues(alpha: 0.15),
                           width: 1,
                         ),
                       ),

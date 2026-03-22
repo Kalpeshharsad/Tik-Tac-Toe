@@ -140,7 +140,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
               color: KColors.surfaceContainerLow,
               borderRadius: BorderRadius.circular(KRadius.lg),
               border: isXTurn
-                  ? Border.all(color: KColors.primary.withOpacity(0.3), width: 1.5)
+                  ? Border.all(color: KColors.primary.withValues(alpha: 0.3), width: 1.5)
                   : null,
             ),
             child: Stack(
@@ -151,7 +151,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                   child: Container(
                     width: 3,
                     decoration: BoxDecoration(
-                      color: KColors.primary.withOpacity(isXTurn ? 0.8 : 0.3),
+                      color: KColors.primary.withValues(alpha: isXTurn ? 0.8 : 0.3),
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(KRadius.lg),
                         bottomLeft: Radius.circular(KRadius.lg),
@@ -223,12 +223,12 @@ class _GameBoardScreenState extends State<GameBoardScreen>
               borderRadius: BorderRadius.circular(KRadius.lg),
               border: isOTurn
                   ? Border.all(
-                      color: KColors.secondary.withOpacity(0.25), width: 1.5)
+                      color: KColors.secondary.withValues(alpha: 0.25), width: 1.5)
                   : null,
               boxShadow: isOTurn
                   ? [
                       BoxShadow(
-                        color: KColors.secondary.withOpacity(0.08),
+                        color: KColors.secondary.withValues(alpha: 0.08),
                         blurRadius: 20,
                         spreadRadius: 2,
                       )
@@ -243,7 +243,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                   child: Container(
                     width: 3,
                     decoration: BoxDecoration(
-                      color: isOTurn ? KColors.secondary : KColors.secondary.withOpacity(0.3),
+                      color: isOTurn ? KColors.secondary : KColors.secondary.withValues(alpha: 0.3),
                       borderRadius: const BorderRadius.only(
                         topRight: Radius.circular(KRadius.lg),
                         bottomRight: Radius.circular(KRadius.lg),
@@ -324,10 +324,10 @@ class _GameBoardScreenState extends State<GameBoardScreen>
           child: Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: KColors.surfaceBright.withOpacity(0.5),
+              color: KColors.surfaceBright.withValues(alpha: 0.5),
               shape: BoxShape.circle,
               border: Border.all(
-                color: KColors.outlineVariant.withOpacity(0.1),
+                color: KColors.outlineVariant.withValues(alpha: 0.1),
                 width: 1,
               ),
             ),
@@ -366,7 +366,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: KColors.secondary.withOpacity(0.1),
+            color: KColors.secondary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(KRadius.full),
           ),
           child: Text(
@@ -394,7 +394,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
           borderRadius: BorderRadius.circular(KRadius.xl),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.4),
+              color: Colors.black.withValues(alpha: 0.4),
               blurRadius: 40,
               spreadRadius: 4,
             ),
@@ -459,7 +459,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                 borderRadius: BorderRadius.circular(KRadius.md),
                 boxShadow: [
                   BoxShadow(
-                    color: KColors.tertiary.withOpacity(0.1),
+                    color: KColors.tertiary.withValues(alpha: 0.1),
                     blurRadius: 20,
                     spreadRadius: 2,
                   ),
@@ -498,7 +498,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                 color: KColors.surfaceBright,
                 borderRadius: BorderRadius.circular(KRadius.md),
                 border: Border.all(
-                  color: KColors.outlineVariant.withOpacity(0.2),
+                  color: KColors.outlineVariant.withValues(alpha: 0.2),
                   width: 1,
                 ),
               ),
@@ -566,7 +566,7 @@ class _PulsingStatusDotState extends State<_PulsingStatusDot>
           color: widget.color,
           boxShadow: [
             BoxShadow(
-              color: widget.color.withOpacity(0.5 * _ctrl.value),
+              color: widget.color.withValues(alpha: 0.5 * _ctrl.value),
               blurRadius: 8,
             ),
           ],

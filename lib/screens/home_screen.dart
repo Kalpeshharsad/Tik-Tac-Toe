@@ -57,7 +57,7 @@ class HomeScreen extends StatelessWidget {
               width: 180, height: 180,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: KColors.primary.withOpacity(0.08),
+                color: KColors.primary.withValues(alpha: 0.08),
               ),
               child: const SizedBox(),
             ),
@@ -68,7 +68,7 @@ class HomeScreen extends StatelessWidget {
               width: 180, height: 180,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: KColors.secondary.withOpacity(0.08),
+                color: KColors.secondary.withValues(alpha: 0.08),
               ),
               child: const SizedBox(),
             ),
@@ -148,7 +148,7 @@ class HomeScreen extends StatelessWidget {
                 height: 24,
                 child: Icon(
                   Icons.military_tech_rounded,
-                  color: KColors.primary.withOpacity(0.2),
+                  color: KColors.primary.withValues(alpha: 0.2),
                   size: 28,
                 ),
               ),
@@ -244,7 +244,7 @@ class HomeScreen extends StatelessWidget {
                         'Single Player vs Kinetic AI',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 12,
-                          color: KColors.onTertiary.withOpacity(0.7),
+                          color: KColors.onTertiary.withValues(alpha: 0.7),
                         ),
                       ),
                     ],
@@ -252,7 +252,7 @@ class HomeScreen extends StatelessWidget {
                   Container(
                     width: 48, height: 48,
                     decoration: BoxDecoration(
-                      color: KColors.onTertiary.withOpacity(0.1),
+                      color: KColors.onTertiary.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -276,7 +276,7 @@ class HomeScreen extends StatelessWidget {
                 color: KColors.surfaceContainerHigh,
                 borderRadius: BorderRadius.circular(KRadius.md),
                 border: Border.all(
-                  color: KColors.outlineVariant.withOpacity(0.1),
+                  color: KColors.outlineVariant.withValues(alpha: 0.1),
                   width: 1,
                 ),
               ),
@@ -307,7 +307,7 @@ class HomeScreen extends StatelessWidget {
                   Container(
                     width: 48, height: 48,
                     decoration: BoxDecoration(
-                      color: KColors.primary.withOpacity(0.1),
+                      color: KColors.primary.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -334,7 +334,7 @@ class HomeScreen extends StatelessWidget {
           color: KColors.surfaceContainerLowest,
           borderRadius: BorderRadius.circular(KRadius.lg),
           border: Border.all(
-            color: KColors.outlineVariant.withOpacity(0.15),
+            color: KColors.outlineVariant.withValues(alpha: 0.15),
             width: 1,
           ),
         ),
@@ -366,7 +366,7 @@ class HomeScreen extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
-                    color: KColors.secondary.withOpacity(0.1),
+                    color: KColors.secondary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(KRadius.full),
                   ),
                   child: Text(
@@ -461,8 +461,8 @@ class HomeScreen extends StatelessWidget {
                         shape: BoxShape.circle,
                         border: Border.all(
                           color: isTop
-                              ? KColors.primary.withOpacity(0.5)
-                              : KColors.outlineVariant.withOpacity(0.3),
+                              ? KColors.primary.withValues(alpha: 0.5)
+                              : KColors.outlineVariant.withValues(alpha: 0.3),
                           width: 2,
                         ),
                       ),
@@ -537,10 +537,10 @@ class _PulsingDotState extends State<_PulsingDot>
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: KColors.tertiaryFixed
-              .withOpacity(0.5 + 0.5 * _ctrl.value),
+              .withValues(alpha: 0.5 + 0.5 * _ctrl.value),
           boxShadow: [
             BoxShadow(
-              color: KColors.tertiaryFixed.withOpacity(0.3 * _ctrl.value),
+              color: KColors.tertiaryFixed.withValues(alpha: 0.3 * _ctrl.value),
               blurRadius: 6,
             ),
           ],

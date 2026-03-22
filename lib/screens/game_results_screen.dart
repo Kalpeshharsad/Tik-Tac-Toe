@@ -62,11 +62,11 @@ class _GameResultsScreenState extends State<GameResultsScreen>
                   radius: 1.2,
                   colors: isDraw
                       ? [
-                          KColors.outline.withOpacity(0.15),
+                          KColors.outline.withValues(alpha: 0.15),
                           KColors.surface,
                         ]
                       : [
-                          winColor.withOpacity(0.15),
+                          winColor.withValues(alpha: 0.15),
                           KColors.surface,
                         ],
                 ),
@@ -121,7 +121,7 @@ class _GameResultsScreenState extends State<GameResultsScreen>
                                     gradient: winGradient,
                                     boxShadow: [
                                       BoxShadow(
-                                        color: winColor.withOpacity(0.3),
+                                        color: winColor.withValues(alpha: 0.3),
                                         blurRadius: 40,
                                         spreadRadius: 4,
                                       ),
@@ -229,10 +229,10 @@ class _GameResultsScreenState extends State<GameResultsScreen>
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: KColors.surfaceContainerHigh.withOpacity(0.6),
+                            color: KColors.surfaceContainerHigh.withValues(alpha: 0.6),
                             borderRadius: BorderRadius.circular(KRadius.lg),
                             border: Border.all(
-                              color: KColors.primary.withOpacity(0.2),
+                              color: KColors.primary.withValues(alpha: 0.2),
                               width: 1,
                             ),
                           ),
@@ -294,7 +294,7 @@ class _GameResultsScreenState extends State<GameResultsScreen>
                                 borderRadius: BorderRadius.circular(KRadius.md),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: KColors.tertiary.withOpacity(0.2),
+                                    color: KColors.tertiary.withValues(alpha: 0.2),
                                     blurRadius: 20,
                                     spreadRadius: 2,
                                   ),
@@ -326,7 +326,7 @@ class _GameResultsScreenState extends State<GameResultsScreen>
                                 color: KColors.surfaceBright,
                                 borderRadius: BorderRadius.circular(KRadius.md),
                                 border: Border.all(
-                                  color: KColors.outlineVariant.withOpacity(0.2),
+                                  color: KColors.outlineVariant.withValues(alpha: 0.2),
                                   width: 1,
                                 ),
                               ),
@@ -367,7 +367,7 @@ class _GameResultsScreenState extends State<GameResultsScreen>
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
-                color: KColors.onSurfaceVariant.withOpacity(0.6),
+                color: KColors.onSurfaceVariant.withValues(alpha: 0.6),
                 letterSpacing: 2,
               ),
             ),
@@ -375,7 +375,7 @@ class _GameResultsScreenState extends State<GameResultsScreen>
               child: Container(
                 margin: const EdgeInsets.only(left: 12),
                 height: 1,
-                color: KColors.outlineVariant.withOpacity(0.3),
+                color: KColors.outlineVariant.withValues(alpha: 0.3),
               ),
             ),
           ],
@@ -526,7 +526,7 @@ class _StatBox extends StatelessWidget {
         color: KColors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(KRadius.lg),
         border: Border.all(
-          color: KColors.outlineVariant.withOpacity(0.1),
+          color: KColors.outlineVariant.withValues(alpha: 0.1),
           width: 1,
         ),
       ),

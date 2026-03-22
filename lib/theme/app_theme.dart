@@ -78,7 +78,7 @@ class KGradients {
     center: Alignment.topCenter,
     radius: 1.5,
     colors: [
-      KColors.primaryContainer.withOpacity(0.15),
+      KColors.primaryContainer.withValues(alpha: 0.15),
       KColors.surface,
     ],
   );

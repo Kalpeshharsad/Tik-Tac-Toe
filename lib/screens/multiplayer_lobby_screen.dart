@@ -59,18 +59,21 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen>
     };
   }
 
-  Future<void> _toggleMatchmaking() async {
-    if (_isSearching) {
-      _nearbyService.stopAll();
-      _pingCtrl.stop();
-      setState(() {
-        _isSearching = false;
-        _discoveredDevices.clear();
-      });
-      return;
-    }
+  bool _isHosting = false;
+  bool _isJoining = false;
 
-    // Request permissions
+  Future<void> _stopAll() async {
+    _nearbyService.stopAll();
+    _pingCtrl.stop();
+    setState(() {
+      _isSearching = false;
+      _isHosting = false;
+      _isJoining = false;
+      _discoveredDevices.clear();
+    });
+  }
+
+  Future<bool> _requestPermissions() async {
     final permissions = [
       Permission.location,
       Permission.bluetooth,
@@ -81,25 +84,61 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen>
     ];
     
     Map<Permission, PermissionStatus> statuses = await permissions.request();
-    if (!mounted) return;
+    return !statuses.values.any((s) => s.isDenied);
+  }
+
+  Future<void> _startHosting() async {
+    if (_isHosting) {
+      await _stopAll();
+      return;
+    }
     
-    if (statuses.values.any((s) => s.isDenied)) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Permissions required for Local Multiplayer')),
-        );
-      }
+    if (!await _requestPermissions()) {
+      _showPermissionError();
       return;
     }
 
     final username = Provider.of<SettingsState>(context, listen: false).userName;
+    bool success = await _nearbyService.startAdvertising(username);
     
-    // Start both for bidirectional discovery (simpler for users)
-    await _nearbyService.startAdvertising(username);
-    await _nearbyService.startDiscovery(username);
+    if (success) {
+      _pingCtrl.repeat(reverse: true);
+      setState(() {
+        _isHosting = true;
+        _isSearching = true;
+      });
+    }
+  }
 
-    _pingCtrl.repeat(reverse: true);
-    setState(() => _isSearching = true);
+  Future<void> _startJoining() async {
+    if (_isJoining) {
+      await _stopAll();
+      return;
+    }
+    
+    if (!await _requestPermissions()) {
+      _showPermissionError();
+      return;
+    }
+
+    final username = Provider.of<SettingsState>(context, listen: false).userName;
+    bool success = await _nearbyService.startDiscovery(username);
+    
+    if (success) {
+      _pingCtrl.repeat(reverse: true);
+      setState(() {
+        _isJoining = true;
+        _isSearching = true;
+      });
+    }
+  }
+
+  void _showPermissionError() {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Permissions required for Local Multiplayer')),
+      );
+    }
   }
 
   void _showConnectionRequestDialog(String id, ConnectionInfo info) {
@@ -202,16 +241,61 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen>
     );
   }
 
+  Widget _buildMatchmakingButton({
+    required VoidCallback onTap,
+    required bool isActive,
+    required bool isOtherActive,
+    required IconData icon,
+    required String label,
+  }) {
+    final color = isActive ? KColors.error : (isOtherActive ? KColors.surfaceContainerHigh : KColors.tertiary);
+    final onColor = isActive ? Colors.white : (isOtherActive ? KColors.onSurfaceVariant : KColors.onTertiary);
+
+    return GestureDetector(
+      onTap: isOtherActive ? null : onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        width: 80,
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(KRadius.md),
+          boxShadow: isActive ? [
+            BoxShadow(
+              color: color.withValues(alpha: 0.2),
+              blurRadius: 16,
+              spreadRadius: 1,
+            ),
+          ] : [],
+        ),
+        child: Column(
+          children: [
+            Icon(isActive ? Icons.stop_rounded : icon, color: onColor, size: 20),
+            const SizedBox(height: 4),
+            Text(
+              isActive ? 'STOP' : label,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 9,
+                fontWeight: FontWeight.w800,
+                color: onColor,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildMatchmakingCard() {
     return Container(
-      padding: const EdgeInsets.all(28),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: KColors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(KRadius.lg),
       ),
       child: Stack(
         children: [
-          // Ambient glow
           Positioned(
             top: -40, right: -40,
             child: Container(
@@ -229,7 +313,7 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'MATCHMAKING',
+                      'MULTIPLAYER LOBBY',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
@@ -239,7 +323,7 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen>
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      _isSearching ? 'Searching for\nOpponent...' : 'Start Local\nMultiplayer',
+                      _isHosting ? 'Host Mode\nWaiting...' : (_isJoining ? 'Join Mode\nScanning...' : 'Start Local\nMatchmaking'),
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
@@ -253,32 +337,20 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen>
                       animation: _pingCtrl,
                       builder: (_, __) => Row(
                         children: [
-                          Stack(
-                            children: [
-                              Container(
-                                width: 10, height: 10,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: KColors.primary
-                                      .withValues(alpha: 0.3 * _pingCtrl.value),
-                                ),
-                              ),
-                              Container(
-                                width: 10, height: 10,
-                                decoration: const BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: KColors.primary,
-                                ),
-                              ),
-                            ],
+                          Container(
+                            width: 10, height: 10,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: (_isSearching) ? KColors.primary : KColors.onSurfaceVariant.withValues(alpha: 0.3),
+                            ),
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            _isSearching ? 'ACTIVE' : 'READY',
+                            _isSearching ? 'ACTIVE' : 'IDLE',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: KColors.primary,
+                              color: _isSearching ? KColors.primary : KColors.onSurfaceVariant,
                             ),
                           ),
                         ],
@@ -288,40 +360,24 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen>
                 ),
               ),
               const SizedBox(width: 16),
-              GestureDetector(
-                onTap: _toggleMatchmaking,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 14),
-                  decoration: BoxDecoration(
-                    color: _isSearching ? KColors.error : KColors.tertiary,
-                    borderRadius: BorderRadius.circular(KRadius.md),
-                    boxShadow: [
-                      BoxShadow(
-                        color: (_isSearching ? KColors.error : KColors.tertiary).withValues(alpha: 0.2),
-                        blurRadius: 16,
-                        spreadRadius: 1,
-                      ),
-                    ],
+              Column(
+                children: [
+                  _buildMatchmakingButton(
+                    onTap: _startHosting,
+                    isActive: _isHosting,
+                    isOtherActive: _isJoining,
+                    icon: Icons.broadcast_on_personal_rounded,
+                    label: 'HOST',
                   ),
-                  child: Column(
-                    children: [
-                      Icon(_isSearching ? Icons.stop_rounded : Icons.radar_rounded,
-                          color: _isSearching ? Colors.white : KColors.onTertiary, size: 20),
-                      const SizedBox(height: 4),
-                      Text(
-                        _isSearching ? 'STOP' : 'GO LIVE',
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w800,
-                          color: _isSearching ? Colors.white : KColors.onTertiary,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ],
+                  const SizedBox(height: 12),
+                  _buildMatchmakingButton(
+                    onTap: _startJoining,
+                    isActive: _isJoining,
+                    isOtherActive: _isHosting,
+                    icon: Icons.radar_rounded,
+                    label: 'JOIN',
                   ),
-                ),
+                ],
               ),
             ],
           ),

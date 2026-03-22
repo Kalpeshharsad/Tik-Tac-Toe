@@ -1,4 +1,4 @@
-package com.example.kinetic_tictactoe
+package com.kinetic.kineticTictactoe
 
 import io.flutter.embedding.android.FlutterActivity
 

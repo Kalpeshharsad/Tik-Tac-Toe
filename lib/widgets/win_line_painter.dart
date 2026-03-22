@@ -18,8 +18,8 @@ class WinLinePainter extends CustomPainter {
     if (winningLine == null || progress == 0) return;
 
     // Calculate tile size (3x3 grid with 12px gaps, 16px padding)
-    final gap = 12.0;
-    final padding = 16.0;
+    const gap = 12.0;
+    const padding = 16.0;
     final tileW = (size.width - padding * 2 - gap * 2) / 3;
     final tileH = (size.height - padding * 2 - gap * 2) / 3;
 

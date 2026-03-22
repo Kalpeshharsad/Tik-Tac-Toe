@@ -84,7 +84,7 @@ class SettingsState extends ChangeNotifier {
   void updateAccentColor(Color color, String label) {
     _accentColor = color;
     _selectedAccentLabel = label;
-    _saveInt(_keyAccentColor, color.value);
+    _saveInt(_keyAccentColor, color.toARGB32());
     _saveString(_keyAccentLabel, label);
     notifyListeners();
   }

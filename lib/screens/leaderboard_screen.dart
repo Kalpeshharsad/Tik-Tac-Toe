@@ -163,13 +163,13 @@ class _RankPodium extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return const SizedBox(
       height: 220,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           // Rank 2
-          const Expanded(
+          Expanded(
             child: _PodiumColumn(
               rank: 2,
               name: 'VoidWalker',
@@ -180,7 +180,7 @@ class _RankPodium extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           // Rank 1
-          const Expanded(
+          Expanded(
             child: _PodiumColumn(
               rank: 1,
               name: 'NeonRacer',
@@ -192,7 +192,7 @@ class _RankPodium extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           // Rank 3
-          const Expanded(
+          Expanded(
             child: _PodiumColumn(
               rank: 3,
               name: 'CyberLuna',

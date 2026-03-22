@@ -66,5 +66,7 @@
 	<string>UIStatusBarStyleLightContent</string>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>This app needs access to the local network to establish secure peer-to-peer data connections for multiplayer gaming.</string>
 </dict>
 </plist>

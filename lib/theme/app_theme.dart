@@ -56,30 +56,30 @@ class KColors {
 
 // ─── Gradients ───────────────────────────────────────────────────────────────
 class KGradients {
-  static const LinearGradient primary = LinearGradient(
+  static LinearGradient primary(ColorScheme colors) => LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [KColors.primary, KColors.primaryContainer],
+    colors: [colors.primary, colors.primaryContainer.withValues(alpha: 0.7)],
   );
 
-  static const LinearGradient secondary = LinearGradient(
+  static LinearGradient secondary(ColorScheme colors) => LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [KColors.secondary, KColors.secondaryDim],
+    colors: [colors.secondary, colors.secondaryContainer.withValues(alpha: 0.7)],
   );
 
-  static const LinearGradient tertiary = LinearGradient(
+  static LinearGradient tertiary(ColorScheme colors) => LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [KColors.tertiary, KColors.tertiaryFixed],
+    colors: [colors.tertiary, colors.tertiaryContainer.withValues(alpha: 0.7)],
   );
 
-  static RadialGradient celebration = RadialGradient(
+  static RadialGradient celebration(ColorScheme colors) => RadialGradient(
     center: Alignment.topCenter,
     radius: 1.5,
     colors: [
-      KColors.primaryContainer.withValues(alpha: 0.15),
-      KColors.surface,
+      colors.primaryContainer.withValues(alpha: 0.15),
+      colors.surface,
     ],
   );
 }
@@ -100,75 +100,71 @@ class KRadius {
 
 // ─── App Theme ────────────────────────────────────────────────────────────────
 class AppTheme {
-  static ThemeData get darkTheme {
-    final base = ThemeData.dark(useMaterial3: true);
+  static ThemeData getTheme(Brightness brightness, Color primaryAccent) {
+    final isDark = brightness == Brightness.dark;
+    final base = isDark ? ThemeData.dark(useMaterial3: true) : ThemeData.light(useMaterial3: true);
     final pjs = GoogleFonts.plusJakartaSansTextTheme(base.textTheme);
 
+    final surfaceColor = isDark ? KColors.surface : const Color(0xFFF8FAFC);
+    final onSurfaceColor = isDark ? KColors.onSurface : const Color(0xFF0F172A);
+    final onSurfaceVariantColor = isDark ? KColors.onSurfaceVariant : const Color(0xFF64748B);
+
     return base.copyWith(
-      colorScheme: const ColorScheme.dark(
-        brightness: Brightness.dark,
-        primary: KColors.primary,
-        onPrimary: KColors.onPrimary,
-        primaryContainer: KColors.primaryContainer,
-        onPrimaryContainer: KColors.onPrimaryContainer,
-        secondary: KColors.secondary,
-        onSecondary: KColors.onSecondary,
-        secondaryContainer: KColors.secondaryContainer,
-        tertiary: KColors.tertiary,
-        onTertiary: KColors.onTertiary,
-        tertiaryContainer: KColors.tertiaryContainer,
-        onTertiaryContainer: KColors.onTertiaryContainer,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: primaryAccent,
+        brightness: brightness,
+        primary: primaryAccent,
+        surface: surfaceColor,
+        onSurface: onSurfaceColor,
         error: KColors.error,
-        errorContainer: KColors.errorContainer,
-        onErrorContainer: KColors.onErrorContainer,
-        surface: KColors.surface,
-        onSurface: KColors.onSurface,
-        surfaceContainerHighest: KColors.surfaceContainerHighest,
-        surfaceContainerHigh: KColors.surfaceContainerHigh,
-        surfaceContainer: KColors.surfaceContainer,
-        surfaceContainerLow: KColors.surfaceContainerLow,
-        surfaceContainerLowest: KColors.surfaceContainerLowest,
-        outline: KColors.outline,
-        outlineVariant: KColors.outlineVariant,
+      ).copyWith(
+        surfaceContainerHighest: isDark ? KColors.surfaceContainerHighest : const Color(0xFFE2E8F0),
+        surfaceContainerHigh: isDark ? KColors.surfaceContainerHigh : const Color(0xFFEDF2F7),
+        surfaceContainer: isDark ? KColors.surfaceContainer : const Color(0xFFF1F5F9),
+        surfaceContainerLow: isDark ? KColors.surfaceContainerLow : const Color(0xFFF8FAFC),
+        surfaceContainerLowest: isDark ? KColors.surfaceContainerLowest : const Color(0xFFFFFFFF),
       ),
-      scaffoldBackgroundColor: KColors.surface,
-      textTheme: pjs.copyWith(
+      scaffoldBackgroundColor: surfaceColor,
+      textTheme: pjs.apply(
+        bodyColor: onSurfaceColor,
+        displayColor: onSurfaceColor,
+      ).copyWith(
         displayLarge: pjs.displayLarge?.copyWith(
           fontWeight: FontWeight.w900,
-          color: KColors.onSurface,
+          color: onSurfaceColor,
           letterSpacing: -1.5,
         ),
         headlineLarge: pjs.headlineLarge?.copyWith(
           fontWeight: FontWeight.w800,
-          color: KColors.onSurface,
+          color: onSurfaceColor,
           letterSpacing: -0.5,
         ),
         headlineMedium: pjs.headlineMedium?.copyWith(
           fontWeight: FontWeight.w700,
-          color: KColors.onSurface,
+          color: onSurfaceColor,
         ),
         titleMedium: pjs.titleMedium?.copyWith(
           fontWeight: FontWeight.w600,
-          color: KColors.onSurface,
+          color: onSurfaceColor,
         ),
         bodyMedium: pjs.bodyMedium?.copyWith(
-          color: KColors.onSurfaceVariant,
+          color: onSurfaceVariantColor,
         ),
         labelSmall: pjs.labelSmall?.copyWith(
-          color: KColors.onSurfaceVariant,
+          color: onSurfaceVariantColor,
           fontWeight: FontWeight.w700,
           letterSpacing: 1.5,
         ),
       ),
-      cardTheme: const CardThemeData(
-        color: KColors.surfaceContainerLow,
+      cardTheme: CardThemeData(
+        color: isDark ? KColors.surfaceContainerLow : const Color(0xFFF1F5F9),
         elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: KRadius.lgRadius),
+        shape: const RoundedRectangleBorder(borderRadius: KRadius.lgRadius),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: KColors.tertiary,
-          foregroundColor: KColors.onTertiary,
+          backgroundColor: primaryAccent,
+          foregroundColor: Colors.white,
           elevation: 0,
           padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
           shape: const RoundedRectangleBorder(borderRadius: KRadius.mdRadius),
@@ -178,10 +174,10 @@ class AppTheme {
           ),
         ),
       ),
-      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: KColors.surfaceContainerLow,
-        selectedItemColor: KColors.primary,
-        unselectedItemColor: Color(0xFF64748B),
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        backgroundColor: isDark ? KColors.surfaceContainerLow : Colors.white,
+        selectedItemColor: primaryAccent,
+        unselectedItemColor: const Color(0xFF94A3B8),
       ),
     );
   }

@@ -15,9 +15,10 @@ class KineticBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
-        color: KColors.surfaceContainerLow.withValues(alpha: 0.9),
+        color: colorScheme.surfaceContainerLow.withValues(alpha: 0.9),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         boxShadow: [
           BoxShadow(
@@ -81,6 +82,7 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
@@ -93,7 +95,7 @@ class _NavItem extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: isActive
-              ? KColors.primary.withValues(alpha: 0.1)
+              ? colorScheme.primary.withValues(alpha: 0.1)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(KRadius.full),
         ),
@@ -102,7 +104,7 @@ class _NavItem extends StatelessWidget {
           children: [
             Icon(
               icon,
-              color: isActive ? KColors.primary : const Color(0xFF64748B),
+              color: isActive ? colorScheme.primary : colorScheme.onSurfaceVariant,
               size: 22,
             ),
             const SizedBox(height: 2),
@@ -111,7 +113,7 @@ class _NavItem extends StatelessWidget {
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: isActive ? KColors.primary : const Color(0xFF64748B),
+                color: isActive ? colorScheme.primary : colorScheme.onSurfaceVariant,
               ),
             ),
           ],

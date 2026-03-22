@@ -42,15 +42,16 @@ class _GameResultsScreenState extends State<GameResultsScreen>
   @override
   Widget build(BuildContext context) {
     final gs = context.watch<GameState>();
+    final colorScheme = Theme.of(context).colorScheme;
     final isDraw = gs.isDraw;
     final winner = gs.winner;
     final isXWin = winner == 'X';
 
-    final winColor = isXWin ? KColors.primary : KColors.secondary;
-    final winGradient = isXWin ? KGradients.primary : KGradients.secondary;
+    final winColor = isXWin ? colorScheme.primary : colorScheme.secondary;
+    final winGradient = isXWin ? KGradients.primary(colorScheme) : KGradients.secondary(colorScheme);
 
     return Scaffold(
-      backgroundColor: KColors.surface,
+      backgroundColor: colorScheme.surface,
       body: Stack(
         children: [
           // Radial celebration background
@@ -62,12 +63,12 @@ class _GameResultsScreenState extends State<GameResultsScreen>
                   radius: 1.2,
                   colors: isDraw
                       ? [
-                          KColors.outline.withValues(alpha: 0.15),
-                          KColors.surface,
+                          colorScheme.outline.withValues(alpha: 0.15),
+                          colorScheme.surface,
                         ]
                       : [
                           winColor.withValues(alpha: 0.15),
-                          KColors.surface,
+                          colorScheme.surface,
                         ],
                 ),
               ),
@@ -90,12 +91,12 @@ class _GameResultsScreenState extends State<GameResultsScreen>
                           fontWeight: FontWeight.w900,
                           fontStyle: FontStyle.italic,
                           fontSize: 22,
-                          color: KColors.primary,
+                          color: colorScheme.primary,
                           letterSpacing: -1,
                         ),
                       ),
-                      const Icon(Icons.leaderboard_outlined,
-                          color: KColors.onSurfaceVariant, size: 22),
+                      Icon(Icons.leaderboard_outlined,
+                          color: colorScheme.onSurfaceVariant, size: 22),
                     ],
                   ),
                 ),
@@ -130,7 +131,7 @@ class _GameResultsScreenState extends State<GameResultsScreen>
                                   padding: const EdgeInsets.all(3),
                                   child: Container(
                                     decoration: BoxDecoration(
-                                      color: KColors.surface,
+                                      color: colorScheme.surface,
                                       borderRadius:
                                           BorderRadius.circular(KRadius.lg - 3),
                                     ),
@@ -152,7 +153,7 @@ class _GameResultsScreenState extends State<GameResultsScreen>
                                         padding: const EdgeInsets.symmetric(
                                             horizontal: 10, vertical: 4),
                                         decoration: BoxDecoration(
-                                          color: KColors.tertiaryContainer,
+                                          color: colorScheme.tertiaryContainer,
                                           borderRadius: BorderRadius.circular(
                                               KRadius.full),
                                         ),
@@ -161,7 +162,7 @@ class _GameResultsScreenState extends State<GameResultsScreen>
                                           style: GoogleFonts.plusJakartaSans(
                                             fontSize: 10,
                                             fontWeight: FontWeight.w900,
-                                            color: KColors.onTertiaryContainer,
+                                            color: colorScheme.onTertiaryContainer,
                                             letterSpacing: 0.5,
                                           ),
                                         ),
@@ -181,7 +182,7 @@ class _GameResultsScreenState extends State<GameResultsScreen>
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 60,
                               fontWeight: FontWeight.w900,
-                              color: KColors.onSurface,
+                              color: colorScheme.onSurface,
                               letterSpacing: -2,
                               height: 1,
                             ),
@@ -196,7 +197,7 @@ class _GameResultsScreenState extends State<GameResultsScreen>
                                 : 'You dominated the grid in record time.',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 15,
-                              color: KColors.onSurfaceVariant,
+                              color: colorScheme.onSurfaceVariant,
                             ),
                             textAlign: TextAlign.center,
                           ),
@@ -208,7 +209,7 @@ class _GameResultsScreenState extends State<GameResultsScreen>
                             Expanded(
                               child: _StatBox(
                                 icon: Icons.timer_outlined,
-                                iconColor: KColors.primary,
+                                iconColor: colorScheme.primary,
                                 value: gs.formattedTime,
                                 label: 'TIME TAKEN',
                               ),
@@ -217,7 +218,7 @@ class _GameResultsScreenState extends State<GameResultsScreen>
                             Expanded(
                               child: _StatBox(
                                 icon: Icons.touch_app_outlined,
-                                iconColor: KColors.secondary,
+                                iconColor: colorScheme.secondary,
                                 value: gs.moveCount.toString(),
                                 label: 'TOTAL MOVES',
                               ),
@@ -229,10 +230,10 @@ class _GameResultsScreenState extends State<GameResultsScreen>
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: KColors.surfaceContainerHigh.withValues(alpha: 0.6),
+                            color: colorScheme.surfaceContainerHigh.withValues(alpha: 0.6),
                             borderRadius: BorderRadius.circular(KRadius.lg),
                             border: Border.all(
-                              color: KColors.primary.withValues(alpha: 0.2),
+                              color: colorScheme.primary.withValues(alpha: 0.2),
                               width: 1,
                             ),
                           ),
@@ -241,12 +242,12 @@ class _GameResultsScreenState extends State<GameResultsScreen>
                               Container(
                                 width: 44, height: 44,
                                 decoration: BoxDecoration(
-                                  color: KColors.surfaceContainerHighest,
+                                  color: colorScheme.surfaceContainerHighest,
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   Icons.stars_rounded,
-                                  color: KColors.tertiary,
+                                  color: colorScheme.tertiary,
                                   size: 22,
                                 ),
                               ),
@@ -260,21 +261,21 @@ class _GameResultsScreenState extends State<GameResultsScreen>
                                       style: GoogleFonts.plusJakartaSans(
                                         fontSize: 18,
                                         fontWeight: FontWeight.w800,
-                                        color: KColors.onSurface,
+                                        color: colorScheme.onSurface,
                                       ),
                                     ),
                                     Text(
                                       'Rank Progress: Gold II',
                                       style: GoogleFonts.plusJakartaSans(
                                         fontSize: 12,
-                                        color: KColors.onSurfaceVariant,
+                                        color: colorScheme.onSurfaceVariant,
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
-                              const Icon(Icons.chevron_right_rounded,
-                                  color: KColors.onSurfaceVariant),
+                              Icon(Icons.chevron_right_rounded,
+                                  color: colorScheme.onSurfaceVariant),
                             ],
                           ),
                         ),
@@ -290,11 +291,11 @@ class _GameResultsScreenState extends State<GameResultsScreen>
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 20),
                               decoration: BoxDecoration(
-                                color: KColors.tertiary,
+                                color: colorScheme.tertiary,
                                 borderRadius: BorderRadius.circular(KRadius.md),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: KColors.tertiary.withValues(alpha: 0.2),
+                                    color: colorScheme.tertiary.withValues(alpha: 0.2),
                                     blurRadius: 20,
                                     spreadRadius: 2,
                                   ),
@@ -306,7 +307,7 @@ class _GameResultsScreenState extends State<GameResultsScreen>
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 17,
                                   fontWeight: FontWeight.w800,
-                                  color: KColors.onTertiary,
+                                  color: colorScheme.onTertiary,
                                 ),
                               ),
                             ),
@@ -323,10 +324,10 @@ class _GameResultsScreenState extends State<GameResultsScreen>
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 20),
                               decoration: BoxDecoration(
-                                color: KColors.surfaceBright,
+                                color: colorScheme.surfaceBright,
                                 borderRadius: BorderRadius.circular(KRadius.md),
                                 border: Border.all(
-                                  color: KColors.outlineVariant.withValues(alpha: 0.2),
+                                  color: colorScheme.outlineVariant.withValues(alpha: 0.2),
                                   width: 1,
                                 ),
                               ),
@@ -336,7 +337,7 @@ class _GameResultsScreenState extends State<GameResultsScreen>
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 17,
                                   fontWeight: FontWeight.w700,
-                                  color: KColors.onSurface,
+                                  color: colorScheme.onSurface,
                                 ),
                               ),
                             ),
@@ -344,7 +345,7 @@ class _GameResultsScreenState extends State<GameResultsScreen>
                         ),
                         const SizedBox(height: 32),
                         // Match history row
-                        _buildMatchHistory(gs, isDraw),
+                        _buildMatchHistory(gs, isDraw, colorScheme),
                       ],
                     ),
                   ),
@@ -357,7 +358,7 @@ class _GameResultsScreenState extends State<GameResultsScreen>
     );
   }
 
-  Widget _buildMatchHistory(GameState gs, bool isDraw) {
+  Widget _buildMatchHistory(GameState gs, bool isDraw, ColorScheme colorScheme) {
     return Column(
       children: [
         Row(
@@ -367,7 +368,7 @@ class _GameResultsScreenState extends State<GameResultsScreen>
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
-                color: KColors.onSurfaceVariant.withValues(alpha: 0.6),
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
                 letterSpacing: 2,
               ),
             ),
@@ -375,7 +376,7 @@ class _GameResultsScreenState extends State<GameResultsScreen>
               child: Container(
                 margin: const EdgeInsets.only(left: 12),
                 height: 1,
-                color: KColors.outlineVariant.withValues(alpha: 0.3),
+                color: colorScheme.outlineVariant.withValues(alpha: 0.3),
               ),
             ),
           ],
@@ -395,27 +396,27 @@ class _GameResultsScreenState extends State<GameResultsScreen>
                       height: 40,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: KColors.surfaceContainerHigh,
+                        color: colorScheme.surfaceContainerHigh,
                         border: Border.all(
-                          color: KColors.primary,
+                          color: colorScheme.primary,
                           width: 2,
                         ),
                       ),
-                      child: const Icon(Icons.person_rounded,
-                          size: 20, color: KColors.primary),
+                      child: Icon(Icons.person_rounded,
+                          size: 20, color: colorScheme.primary),
                     ),
                     Positioned(
                       bottom: -2, right: -2,
                       child: Container(
                         width: 14, height: 14,
                         decoration: BoxDecoration(
-                          color: KColors.tertiaryFixed,
+                          color: colorScheme.tertiary,
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: KColors.surface, width: 2),
+                            color: colorScheme.surface, width: 2),
                         ),
-                        child: const Icon(Icons.check_rounded,
-                            size: 8, color: KColors.onTertiary),
+                        child: Icon(Icons.check_rounded,
+                            size: 8, color: colorScheme.onTertiary),
                       ),
                     ),
                   ],
@@ -429,7 +430,7 @@ class _GameResultsScreenState extends State<GameResultsScreen>
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
-                        color: KColors.onSurface,
+                        color: colorScheme.onSurface,
                       ),
                     ),
                     Text(
@@ -438,8 +439,8 @@ class _GameResultsScreenState extends State<GameResultsScreen>
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
                         color: gs.winner == 'X'
-                            ? KColors.primary
-                            : KColors.onSurfaceVariant,
+                            ? colorScheme.primary
+                            : colorScheme.onSurfaceVariant,
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -453,7 +454,7 @@ class _GameResultsScreenState extends State<GameResultsScreen>
                 fontSize: 18,
                 fontWeight: FontWeight.w900,
                 fontStyle: FontStyle.italic,
-                color: KColors.onSurfaceVariant,
+                color: colorScheme.onSurfaceVariant,
                 letterSpacing: -0.5,
               ),
             ),
@@ -468,7 +469,7 @@ class _GameResultsScreenState extends State<GameResultsScreen>
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
-                        color: KColors.onSurface,
+                        color: colorScheme.onSurface,
                       ),
                     ),
                     Text(
@@ -476,7 +477,7 @@ class _GameResultsScreenState extends State<GameResultsScreen>
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
-                        color: KColors.onSurfaceVariant,
+                        color: colorScheme.onSurfaceVariant,
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -487,14 +488,14 @@ class _GameResultsScreenState extends State<GameResultsScreen>
                   width: 40, height: 40,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: KColors.surfaceContainerHigh,
+                    color: colorScheme.surfaceContainerHigh,
                     border: Border.all(
-                      color: KColors.outlineVariant,
+                      color: colorScheme.outlineVariant,
                       width: 2,
                     ),
                   ),
-                  child: const Icon(Icons.smart_toy_rounded,
-                      size: 20, color: KColors.onSurfaceVariant),
+                  child: Icon(Icons.smart_toy_rounded,
+                      size: 20, color: colorScheme.onSurfaceVariant),
                 ),
               ],
             ),
@@ -520,13 +521,14 @@ class _StatBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: KColors.surfaceContainerLow,
+        color: colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(KRadius.lg),
         border: Border.all(
-          color: KColors.outlineVariant.withValues(alpha: 0.1),
+          color: colorScheme.outlineVariant.withValues(alpha: 0.1),
           width: 1,
         ),
       ),
@@ -540,7 +542,7 @@ class _StatBox extends StatelessWidget {
             style: GoogleFonts.plusJakartaSans(
               fontSize: 28,
               fontWeight: FontWeight.w900,
-              color: KColors.onSurface,
+              color: colorScheme.onSurface,
             ),
           ),
           Text(
@@ -548,7 +550,7 @@ class _StatBox extends StatelessWidget {
             style: GoogleFonts.plusJakartaSans(
               fontSize: 10,
               fontWeight: FontWeight.w700,
-              color: KColors.onSurfaceVariant,
+              color: colorScheme.onSurfaceVariant,
               letterSpacing: 1.2,
             ),
           ),

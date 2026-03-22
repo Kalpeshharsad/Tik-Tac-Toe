@@ -14,6 +14,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final gameState = context.watch<GameState>();
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       body: CustomScrollView(
@@ -27,11 +28,11 @@ class HomeScreen extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 140),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
-                _buildHeroSection(context),
-                _buildStatsBento(context, gameState),
-                _buildMenuButtons(context),
-                _buildDailyChallenges(context),
-                _buildElitePlayers(context),
+                _buildHeroSection(context, colorScheme),
+                _buildStatsBento(context, gameState, colorScheme),
+                _buildMenuButtons(context, colorScheme),
+                _buildDailyChallenges(context, colorScheme),
+                _buildElitePlayers(context, colorScheme),
               ]),
             ),
           ),
@@ -47,7 +48,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeroSection(BuildContext context) {
+  Widget _buildHeroSection(BuildContext context, ColorScheme colorScheme) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
       child: Stack(
@@ -59,7 +60,7 @@ class HomeScreen extends StatelessWidget {
               width: 180, height: 180,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: KColors.primary.withValues(alpha: 0.08),
+                color: colorScheme.primary.withValues(alpha: 0.08),
               ),
               child: const SizedBox(),
             ),
@@ -70,7 +71,7 @@ class HomeScreen extends StatelessWidget {
               width: 180, height: 180,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: KColors.secondary.withValues(alpha: 0.08),
+                color: colorScheme.secondary.withValues(alpha: 0.08),
               ),
               child: const SizedBox(),
             ),
@@ -83,7 +84,7 @@ class HomeScreen extends StatelessWidget {
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
-                  color: KColors.primary,
+                  color: colorScheme.primary,
                   letterSpacing: 2.0,
                 ),
               ),
@@ -93,13 +94,13 @@ class HomeScreen extends StatelessWidget {
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 48,
                   fontWeight: FontWeight.w900,
-                  color: KColors.onSurface,
+                  color: colorScheme.onSurface,
                   height: 1.0,
                   letterSpacing: -1.5,
                 ),
               ),
               ShaderMask(
-                shaderCallback: (bounds) => KGradients.primary.createShader(bounds),
+                shaderCallback: (bounds) => KGradients.primary(colorScheme).createShader(bounds),
                 child: Text(
                   'Strategy.',
                   style: GoogleFonts.plusJakartaSans(
@@ -116,7 +117,7 @@ class HomeScreen extends StatelessWidget {
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 48,
                   fontWeight: FontWeight.w900,
-                  color: KColors.onSurface,
+                  color: colorScheme.onSurface,
                   height: 1.0,
                   letterSpacing: -1.5,
                 ),
@@ -126,7 +127,7 @@ class HomeScreen extends StatelessWidget {
                 'Redefining the classic 3×3 stage with high-energy visuals and competitive play.',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
-                  color: KColors.onSurfaceVariant,
+                  color: colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
@@ -136,7 +137,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatsBento(BuildContext context, GameState state) {
+  Widget _buildStatsBento(BuildContext context, GameState state, ColorScheme colorScheme) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
       child: Row(
@@ -145,12 +146,12 @@ class HomeScreen extends StatelessWidget {
             child: StatCard(
               label: 'Total Wins',
               value: state.xScore.toString().padLeft(3, '0'),
-              valueColor: KColors.onSurface,
+              valueColor: colorScheme.onSurface,
               badge: SizedBox(
                 height: 24,
                 child: Icon(
                   Icons.military_tech_rounded,
-                  color: KColors.primary.withValues(alpha: 0.2),
+                  color: colorScheme.primary.withValues(alpha: 0.2),
                   size: 28,
                 ),
               ),
@@ -162,7 +163,7 @@ class HomeScreen extends StatelessWidget {
                     'Top 5% Globally',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 10,
-                      color: KColors.onSurfaceVariant,
+                      color: colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -174,7 +175,7 @@ class HomeScreen extends StatelessWidget {
             child: StatCard(
               label: 'Recent Streak',
               value: state.oScore.toString().padLeft(2, '0'),
-              valueColor: KColors.secondary,
+              valueColor: colorScheme.secondary,
               footer: Row(
                 children: [
                   for (final mark in ['X', 'O', 'X'])
@@ -184,9 +185,9 @@ class HomeScreen extends StatelessWidget {
                       margin: const EdgeInsets.only(right: 2),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: mark == 'X' ? KColors.primary : KColors.secondary,
+                        color: mark == 'X' ? colorScheme.primary : colorScheme.secondary,
                         border: Border.all(
-                          color: KColors.surfaceContainerLow,
+                          color: colorScheme.surfaceContainerLow,
                           width: 2,
                         ),
                       ),
@@ -197,8 +198,8 @@ class HomeScreen extends StatelessWidget {
                             fontSize: 8,
                             fontWeight: FontWeight.w900,
                             color: mark == 'X'
-                                ? KColors.onPrimary
-                                : KColors.onSecondary,
+                                ? colorScheme.onPrimary
+                                : colorScheme.onSecondary,
                           ),
                         ),
                       ),
@@ -212,7 +213,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMenuButtons(BuildContext context) {
+  Widget _buildMenuButtons(BuildContext context, ColorScheme colorScheme) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
       child: Column(
@@ -224,7 +225,7 @@ class HomeScreen extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 24),
               decoration: BoxDecoration(
-                color: KColors.tertiary,
+                color: colorScheme.tertiary,
                 borderRadius: BorderRadius.circular(KRadius.md),
               ),
               child: Row(
@@ -238,7 +239,7 @@ class HomeScreen extends StatelessWidget {
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 20,
                           fontWeight: FontWeight.w900,
-                          color: KColors.onTertiary,
+                          color: colorScheme.onTertiary,
                           letterSpacing: -0.5,
                         ),
                       ),
@@ -246,7 +247,7 @@ class HomeScreen extends StatelessWidget {
                         'Single Player vs Kinetic AI',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 12,
-                          color: KColors.onTertiary.withValues(alpha: 0.7),
+                          color: colorScheme.onTertiary.withValues(alpha: 0.7),
                         ),
                       ),
                     ],
@@ -254,12 +255,12 @@ class HomeScreen extends StatelessWidget {
                   Container(
                     width: 48, height: 48,
                     decoration: BoxDecoration(
-                      color: KColors.onTertiary.withValues(alpha: 0.1),
+                      color: colorScheme.onTertiary.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.smart_toy_outlined,
-                      color: KColors.onTertiary,
+                      color: colorScheme.onTertiary,
                       size: 24,
                     ),
                   ),
@@ -275,10 +276,10 @@ class HomeScreen extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 24),
               decoration: BoxDecoration(
-                color: KColors.surfaceContainerHigh,
+                color: colorScheme.surfaceContainerHigh,
                 borderRadius: BorderRadius.circular(KRadius.md),
                 border: Border.all(
-                  color: KColors.outlineVariant.withValues(alpha: 0.1),
+                  color: colorScheme.outlineVariant.withValues(alpha: 0.1),
                   width: 1,
                 ),
               ),
@@ -293,7 +294,7 @@ class HomeScreen extends StatelessWidget {
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 20,
                           fontWeight: FontWeight.w900,
-                          color: KColors.onSurface,
+                          color: colorScheme.onSurface,
                           letterSpacing: -0.5,
                         ),
                       ),
@@ -301,7 +302,7 @@ class HomeScreen extends StatelessWidget {
                         'Challenge players worldwide',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 12,
-                          color: KColors.onSurfaceVariant,
+                          color: colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -309,12 +310,12 @@ class HomeScreen extends StatelessWidget {
                   Container(
                     width: 48, height: 48,
                     decoration: BoxDecoration(
-                      color: KColors.primary.withValues(alpha: 0.1),
+                      color: colorScheme.primary.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.public_rounded,
-                      color: KColors.primary,
+                      color: colorScheme.primary,
                       size: 24,
                     ),
                   ),
@@ -327,16 +328,16 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDailyChallenges(BuildContext context) {
+  Widget _buildDailyChallenges(BuildContext context, ColorScheme colorScheme) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
       child: Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: KColors.surfaceContainerLowest,
+          color: colorScheme.surfaceContainerLowest,
           borderRadius: BorderRadius.circular(KRadius.lg),
           border: Border.all(
-            color: KColors.outlineVariant.withValues(alpha: 0.15),
+            color: colorScheme.outlineVariant.withValues(alpha: 0.15),
             width: 1,
           ),
         ),
@@ -354,13 +355,13 @@ class HomeScreen extends StatelessWidget {
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 17,
                         fontWeight: FontWeight.w700,
-                        color: KColors.onSurface,
+                        color: colorScheme.onSurface,
                       ),
                     ),
                     Text('Expires in 14h 22m',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 12,
-                          color: KColors.onSurfaceVariant,
+                          color: colorScheme.onSurfaceVariant,
                         )),
                   ],
                 ),
@@ -368,7 +369,7 @@ class HomeScreen extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
-                    color: KColors.secondary.withValues(alpha: 0.1),
+                    color: colorScheme.secondary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(KRadius.full),
                   ),
                   child: Text(
@@ -376,7 +377,7 @@ class HomeScreen extends StatelessWidget {
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 10,
                       fontWeight: FontWeight.w800,
-                      color: KColors.secondary,
+                      color: colorScheme.secondary,
                       letterSpacing: 0.5,
                     ),
                   ),
@@ -386,20 +387,20 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 20),
             _ChallengeRow(
               icon: Icons.grid_3x3_rounded,
-              iconColor: KColors.primary,
+              iconColor: colorScheme.primary,
               label: "Win 3 games with 'X'",
               current: 2,
               total: 3,
-              gradient: KGradients.primary,
+              gradient: KGradients.primary(colorScheme),
             ),
             const SizedBox(height: 16),
             _ChallengeRow(
               icon: Icons.history_rounded,
-              iconColor: KColors.secondary,
+              iconColor: colorScheme.secondary,
               label: 'Complete match in 1 min',
               current: 0,
               total: 1,
-              gradient: KGradients.secondary,
+              gradient: KGradients.secondary(colorScheme),
             ),
           ],
         ),
@@ -407,7 +408,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildElitePlayers(BuildContext context) {
+  Widget _buildElitePlayers(BuildContext context, ColorScheme colorScheme) {
     final players = [
       {'name': 'NeonRacer', 'rank': '#1 WORLD', 'top': true},
       {'name': 'VoidWalker', 'rank': '#2 WORLD', 'top': false},
@@ -424,7 +425,7 @@ class HomeScreen extends StatelessWidget {
             style: GoogleFonts.plusJakartaSans(
               fontSize: 18,
               fontWeight: FontWeight.w700,
-              color: KColors.onSurface,
+              color: colorScheme.onSurface,
             ),
           ),
         ),
@@ -442,12 +443,12 @@ class HomeScreen extends StatelessWidget {
                 width: 130,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: KColors.surfaceContainerLow,
+                  color: colorScheme.surfaceContainerLow,
                   borderRadius: BorderRadius.circular(KRadius.lg),
                   border: isTop
                       ? Border(
                           bottom: BorderSide(
-                            color: KColors.primary,
+                            color: colorScheme.primary,
                             width: 2,
                           ),
                         )
@@ -459,18 +460,18 @@ class HomeScreen extends StatelessWidget {
                     Container(
                       width: 48, height: 48,
                       decoration: BoxDecoration(
-                        color: KColors.surfaceBright,
+                        color: colorScheme.surfaceBright,
                         shape: BoxShape.circle,
                         border: Border.all(
                           color: isTop
-                              ? KColors.primary.withValues(alpha: 0.5)
-                              : KColors.outlineVariant.withValues(alpha: 0.3),
+                              ? colorScheme.primary.withValues(alpha: 0.5)
+                              : colorScheme.outlineVariant.withValues(alpha: 0.3),
                           width: 2,
                         ),
                       ),
                       child: Icon(
                         Icons.person_rounded,
-                        color: isTop ? KColors.primary : KColors.onSurfaceVariant,
+                        color: isTop ? colorScheme.primary : colorScheme.onSurfaceVariant,
                         size: 24,
                       ),
                     ),
@@ -480,7 +481,7 @@ class HomeScreen extends StatelessWidget {
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
-                        color: KColors.onSurface,
+                        color: colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -490,8 +491,8 @@ class HomeScreen extends StatelessWidget {
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
                         color: isTop
-                            ? KColors.primary
-                            : KColors.onSurfaceVariant,
+                            ? colorScheme.primary
+                            : colorScheme.onSurfaceVariant,
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -532,17 +533,18 @@ class _PulsingDotState extends State<_PulsingDot>
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return AnimatedBuilder(
       animation: _ctrl,
       builder: (_, __) => Container(
         width: 8, height: 8,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: KColors.tertiaryFixed
+          color: colorScheme.tertiary
               .withValues(alpha: 0.5 + 0.5 * _ctrl.value),
           boxShadow: [
             BoxShadow(
-              color: KColors.tertiaryFixed.withValues(alpha: 0.3 * _ctrl.value),
+              color: colorScheme.tertiary.withValues(alpha: 0.3 * _ctrl.value),
               blurRadius: 6,
             ),
           ],
@@ -571,13 +573,14 @@ class _ChallengeRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final progress = total > 0 ? current / total : 0.0;
     return Row(
       children: [
         Container(
           width: 40, height: 40,
           decoration: BoxDecoration(
-            color: KColors.surfaceContainerHigh,
+            color: colorScheme.surfaceContainerHigh,
             borderRadius: BorderRadius.circular(KRadius.md),
           ),
           child: Icon(icon, color: iconColor, size: 20),
@@ -595,14 +598,14 @@ class _ChallengeRow extends StatelessWidget {
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: KColors.onSurface,
+                      color: colorScheme.onSurface,
                     ),
                   ),
                   Text(
                     '$current/$total',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 12,
-                      color: KColors.onSurfaceVariant,
+                      color: colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -613,7 +616,7 @@ class _ChallengeRow extends StatelessWidget {
                 child: LinearProgressIndicator(
                   value: progress,
                   minHeight: 6,
-                  backgroundColor: KColors.surfaceContainerHigh,
+                  backgroundColor: colorScheme.surfaceContainerHigh,
                   valueColor: AlwaysStoppedAnimation(iconColor),
                 ),
               ),

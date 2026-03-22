@@ -97,21 +97,22 @@ class _GameBoardScreenState extends State<GameBoardScreen>
   @override
   Widget build(BuildContext context) {
     final gs = context.watch<GameState>();
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: KColors.surface,
+      backgroundColor: colorScheme.surface,
       appBar: const KineticAppBar(),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 120),
         child: Column(
           children: [
-            _buildScoreboard(gs),
+            _buildScoreboard(gs, colorScheme),
             const SizedBox(height: 16),
-            _buildControls(gs),
+            _buildControls(gs, colorScheme),
             const SizedBox(height: 16),
-            _buildGrid(gs),
+            _buildGrid(gs, colorScheme),
             const SizedBox(height: 20),
-            _buildActionButtons(context, gs),
+            _buildActionButtons(context, gs, colorScheme),
           ],
         ),
       ),
@@ -125,7 +126,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
     );
   }
 
-  Widget _buildScoreboard(GameState gs) {
+  Widget _buildScoreboard(GameState gs, ColorScheme colorScheme) {
     final isXTurn = gs.currentPlayer == 'X' && !gs.gameOver;
     final isOTurn = gs.currentPlayer == 'O' && !gs.gameOver;
 
@@ -137,10 +138,10 @@ class _GameBoardScreenState extends State<GameBoardScreen>
             duration: const Duration(milliseconds: 250),
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: KColors.surfaceContainerLow,
+              color: colorScheme.surfaceContainerLow,
               borderRadius: BorderRadius.circular(KRadius.lg),
               border: isXTurn
-                  ? Border.all(color: KColors.primary.withValues(alpha: 0.3), width: 1.5)
+                  ? Border.all(color: colorScheme.primary.withValues(alpha: 0.3), width: 1.5)
                   : null,
             ),
             child: Stack(
@@ -151,7 +152,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                   child: Container(
                     width: 3,
                     decoration: BoxDecoration(
-                      color: KColors.primary.withValues(alpha: isXTurn ? 0.8 : 0.3),
+                      color: colorScheme.primary.withValues(alpha: isXTurn ? 0.8 : 0.3),
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(KRadius.lg),
                         bottomLeft: Radius.circular(KRadius.lg),
@@ -162,7 +163,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                 // Online indicator
                 Positioned(
                   top: 0, right: 0,
-                  child: _PulsingStatusDot(color: KColors.tertiaryFixed),
+                  child: _PulsingStatusDot(color: colorScheme.tertiary),
                 ),
                 Padding(
                   padding: const EdgeInsets.only(left: 8),
@@ -174,7 +175,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
-                          color: KColors.onSurfaceVariant,
+                          color: colorScheme.onSurfaceVariant,
                           letterSpacing: 1.5,
                         ),
                       ),
@@ -182,7 +183,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           ShaderMask(
-                            shaderCallback: (b) => KGradients.primary.createShader(b),
+                            shaderCallback: (b) => KGradients.primary(colorScheme).createShader(b),
                             child: Text(
                               'X',
                               style: GoogleFonts.plusJakartaSans(
@@ -197,7 +198,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 44,
                               fontWeight: FontWeight.w700,
-                              color: KColors.onSurface,
+                              color: colorScheme.onSurface,
                               height: 1,
                             ),
                           ),
@@ -218,17 +219,17 @@ class _GameBoardScreenState extends State<GameBoardScreen>
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: isOTurn
-                  ? KColors.surfaceContainerHigh
-                  : KColors.surfaceContainerLow,
+                  ? colorScheme.surfaceContainerHigh
+                  : colorScheme.surfaceContainerLow,
               borderRadius: BorderRadius.circular(KRadius.lg),
               border: isOTurn
                   ? Border.all(
-                      color: KColors.secondary.withValues(alpha: 0.25), width: 1.5)
+                      color: colorScheme.secondary.withValues(alpha: 0.25), width: 1.5)
                   : null,
               boxShadow: isOTurn
                   ? [
                       BoxShadow(
-                        color: KColors.secondary.withValues(alpha: 0.08),
+                        color: colorScheme.secondary.withValues(alpha: 0.08),
                         blurRadius: 20,
                         spreadRadius: 2,
                       )
@@ -243,7 +244,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                   child: Container(
                     width: 3,
                     decoration: BoxDecoration(
-                      color: isOTurn ? KColors.secondary : KColors.secondary.withValues(alpha: 0.3),
+                      color: isOTurn ? colorScheme.secondary : colorScheme.secondary.withValues(alpha: 0.3),
                       borderRadius: const BorderRadius.only(
                         topRight: Radius.circular(KRadius.lg),
                         bottomRight: Radius.circular(KRadius.lg),
@@ -259,7 +260,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
-                        color: isOTurn ? KColors.secondary : KColors.onSurfaceVariant,
+                        color: isOTurn ? colorScheme.secondary : colorScheme.onSurfaceVariant,
                         letterSpacing: 1.5,
                       ),
                     ),
@@ -267,7 +268,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         ShaderMask(
-                          shaderCallback: (b) => KGradients.secondary.createShader(b),
+                          shaderCallback: (b) => KGradients.secondary(colorScheme).createShader(b),
                           child: Text(
                             'O',
                             style: GoogleFonts.plusJakartaSans(
@@ -282,7 +283,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 44,
                             fontWeight: FontWeight.w700,
-                            color: KColors.onSurface,
+                            color: colorScheme.onSurface,
                             height: 1,
                           ),
                         ),
@@ -292,12 +293,12 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                       const SizedBox(height: 8),
                       ClipRRect(
                         borderRadius: BorderRadius.circular(4),
-                        child: const LinearProgressIndicator(
+                        child: LinearProgressIndicator(
                           value: 0.66,
                           minHeight: 4,
-                          backgroundColor: KColors.surfaceContainer,
+                          backgroundColor: colorScheme.surfaceContainer,
                           valueColor:
-                              AlwaysStoppedAnimation(KColors.secondary),
+                              AlwaysStoppedAnimation(colorScheme.secondary),
                         ),
                       ),
                     ],
@@ -311,7 +312,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
     );
   }
 
-  Widget _buildControls(GameState gs) {
+  Widget _buildControls(GameState gs, ColorScheme colorScheme) {
     return Row(
       children: [
         // Undo + Timer
@@ -324,16 +325,16 @@ class _GameBoardScreenState extends State<GameBoardScreen>
           child: Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: KColors.surfaceBright.withValues(alpha: 0.5),
+              color: colorScheme.surfaceBright.withValues(alpha: 0.5),
               shape: BoxShape.circle,
               border: Border.all(
-                color: KColors.outlineVariant.withValues(alpha: 0.1),
+                color: colorScheme.outlineVariant.withValues(alpha: 0.1),
                 width: 1,
               ),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.undo_rounded,
-              color: KColors.onSurfaceVariant,
+              color: colorScheme.onSurfaceVariant,
               size: 20,
             ),
           ),
@@ -347,7 +348,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
-                color: KColors.onSurfaceVariant,
+                color: colorScheme.onSurfaceVariant,
                 letterSpacing: 1.5,
               ),
             ),
@@ -356,7 +357,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: KColors.onSurface,
+                color: colorScheme.onSurface,
                 letterSpacing: -0.5,
               ),
             ),
@@ -366,7 +367,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: KColors.secondary.withValues(alpha: 0.1),
+            color: colorScheme.secondary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(KRadius.full),
           ),
           child: Text(
@@ -376,7 +377,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
             style: GoogleFonts.plusJakartaSans(
               fontSize: 13,
               fontWeight: FontWeight.w700,
-              color: KColors.secondary,
+              color: colorScheme.secondary,
             ),
           ),
         ),
@@ -384,13 +385,13 @@ class _GameBoardScreenState extends State<GameBoardScreen>
     );
   }
 
-  Widget _buildGrid(GameState gs) {
+  Widget _buildGrid(GameState gs, ColorScheme colorScheme) {
     return AspectRatio(
       aspectRatio: 1,
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: KColors.surfaceContainerLow,
+          color: colorScheme.surfaceContainerLow,
           borderRadius: BorderRadius.circular(KRadius.xl),
           boxShadow: [
             BoxShadow(
@@ -442,7 +443,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
     );
   }
 
-  Widget _buildActionButtons(BuildContext context, GameState gs) {
+  Widget _buildActionButtons(BuildContext context, GameState gs, ColorScheme colorScheme) {
     return Row(
       children: [
         Expanded(
@@ -455,11 +456,11 @@ class _GameBoardScreenState extends State<GameBoardScreen>
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 20),
               decoration: BoxDecoration(
-                color: KColors.tertiary,
+                color: colorScheme.tertiary,
                 borderRadius: BorderRadius.circular(KRadius.md),
                 boxShadow: [
                   BoxShadow(
-                    color: KColors.tertiary.withValues(alpha: 0.1),
+                    color: colorScheme.tertiary.withValues(alpha: 0.1),
                     blurRadius: 20,
                     spreadRadius: 2,
                   ),
@@ -468,15 +469,15 @@ class _GameBoardScreenState extends State<GameBoardScreen>
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.refresh_rounded,
-                      color: KColors.onTertiary, size: 20),
+                  Icon(Icons.refresh_rounded,
+                      color: colorScheme.onTertiary, size: 20),
                   const SizedBox(width: 8),
                   Text(
                     'RESTART GAME',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 13,
                       fontWeight: FontWeight.w800,
-                      color: KColors.onTertiary,
+                      color: colorScheme.onTertiary,
                       letterSpacing: 0.5,
                     ),
                   ),
@@ -495,10 +496,10 @@ class _GameBoardScreenState extends State<GameBoardScreen>
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 20),
               decoration: BoxDecoration(
-                color: KColors.surfaceBright,
+                color: colorScheme.surfaceBright,
                 borderRadius: BorderRadius.circular(KRadius.md),
                 border: Border.all(
-                  color: KColors.outlineVariant.withValues(alpha: 0.2),
+                  color: colorScheme.outlineVariant.withValues(alpha: 0.2),
                   width: 1,
                 ),
               ),
@@ -513,7 +514,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 13,
                       fontWeight: FontWeight.w800,
-                      color: KColors.onSurface,
+                      color: colorScheme.onSurface,
                       letterSpacing: 0.5,
                     ),
                   ),

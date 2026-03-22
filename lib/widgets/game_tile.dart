@@ -54,6 +54,7 @@ class _GameTileState extends State<GameTile>
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final isX = widget.value == 'X';
     final isEmpty = widget.value == null;
 
@@ -61,8 +62,8 @@ class _GameTileState extends State<GameTile>
     Color glowColor = Colors.transparent;
     if (widget.isWinning) {
       glowColor = isX
-          ? KColors.primary.withValues(alpha: 0.25)
-          : KColors.secondary.withValues(alpha: 0.25);
+          ? colorScheme.primary.withValues(alpha: 0.25)
+          : colorScheme.secondary.withValues(alpha: 0.25);
     }
 
     return GestureDetector(
@@ -72,9 +73,9 @@ class _GameTileState extends State<GameTile>
         decoration: BoxDecoration(
           color: widget.isWinning
               ? (isX
-                  ? KColors.primary.withValues(alpha: 0.08)
-                  : KColors.secondary.withValues(alpha: 0.08))
-              : KColors.surfaceContainerHigh,
+                  ? colorScheme.primary.withValues(alpha: 0.08)
+                  : colorScheme.secondary.withValues(alpha: 0.08))
+              : colorScheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(KRadius.md),
           boxShadow: widget.isWinning
               ? [
@@ -86,7 +87,7 @@ class _GameTileState extends State<GameTile>
                 ]
               : [],
           border: Border.all(
-            color: KColors.outlineVariant.withValues(alpha: 0.08),
+            color: colorScheme.outlineVariant.withValues(alpha: 0.08),
             width: 1,
           ),
         ),
@@ -100,8 +101,8 @@ class _GameTileState extends State<GameTile>
                     child: isX
                         ? ShaderMask(
                             shaderCallback: (bounds) =>
-                                KGradients.primary.createShader(bounds),
-                            child: Text(
+                                KGradients.primary(colorScheme).createShader(bounds),
+                            child: const Text(
                               'X',
                               style: TextStyle(
                                 fontFamily: 'PlusJakartaSans',
@@ -113,8 +114,8 @@ class _GameTileState extends State<GameTile>
                           )
                         : ShaderMask(
                             shaderCallback: (bounds) =>
-                                KGradients.secondary.createShader(bounds),
-                            child: Text(
+                                KGradients.secondary(colorScheme).createShader(bounds),
+                            child: const Text(
                               'O',
                               style: TextStyle(
                                 fontFamily: 'PlusJakartaSans',

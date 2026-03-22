@@ -71,6 +71,8 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen>
       _isJoining = false;
       _discoveredDevices.clear();
     });
+    // Wait for native side to fully cycle
+    await Future.delayed(const Duration(milliseconds: 500));
   }
 
   Future<bool> _requestPermissions() async {
@@ -153,10 +155,11 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen>
     }
   }
 
-  void _showError(String msg) {
+  void _showError(dynamic msg) {
     if (mounted) {
+      final String text = msg is Exception ? msg.toString() : msg.toString();
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(msg), backgroundColor: KColors.error),
+        SnackBar(content: Text(text), backgroundColor: KColors.error),
       );
     }
   }

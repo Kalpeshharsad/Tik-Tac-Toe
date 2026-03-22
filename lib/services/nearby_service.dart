@@ -9,7 +9,7 @@ class NearbyService {
   factory NearbyService() => _instance;
   NearbyService._internal();
 
-  final Strategy strategy = Strategy.P2P_STAR;
+  final Strategy strategy = Strategy.P2P_CLUSTER;
   String? connectedEndpointId;
   String? connectedEndpointName;
   NearbyStatus status = NearbyStatus.idle;
@@ -30,7 +30,7 @@ class NearbyService {
         onConnectionInitiated: _onConnectionInitiated,
         onConnectionResult: _onConnectionResult,
         onDisconnected: _onDisconnected,
-        serviceId: "kinetic",
+        serviceId: "kineticgame",
       );
       if (a) status = NearbyStatus.advertising;
       return a;
@@ -46,7 +46,7 @@ class NearbyService {
         strategy,
         onEndpointFound: _onEndpointFound,
         onEndpointLost: (id) => _onEndpointLost(id),
-        serviceId: "kinetic",
+        serviceId: "kineticgame",
       );
       if (a) status = NearbyStatus.discovering;
       return a;

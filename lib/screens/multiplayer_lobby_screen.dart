@@ -77,6 +77,7 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen>
       Permission.bluetoothScan,
       Permission.bluetoothAdvertise,
       Permission.bluetoothConnect,
+      Permission.nearbyWifiDevices,
     ];
     
     Map<Permission, PermissionStatus> statuses = await permissions.request();

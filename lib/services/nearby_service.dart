@@ -30,6 +30,7 @@ class NearbyService {
         onConnectionInitiated: _onConnectionInitiated,
         onConnectionResult: _onConnectionResult,
         onDisconnected: _onDisconnected,
+        serviceId: "kinetic-p2p",
       );
       if (a) status = NearbyStatus.advertising;
       return a;
@@ -45,6 +46,7 @@ class NearbyService {
         strategy,
         onEndpointFound: _onEndpointFound,
         onEndpointLost: (id) => _onEndpointLost(id),
+        serviceId: "kinetic-p2p",
       );
       if (a) status = NearbyStatus.discovering;
       return a;

@@ -74,8 +74,8 @@
 	<string>This app needs to use the local network to find and connect to other devices for multiplayer games.</string>
 	<key>NSBonjourServices</key>
 	<array>
-		<string>_nearby-devices._tcp</string>
-		<string>_nearby-devices._udp</string>
+		<string>_kinetic-p2p._tcp</string>
+		<string>_kinetic-p2p._udp</string>
 	</array>
 </dict>
 </plist>

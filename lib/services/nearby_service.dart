@@ -23,36 +23,28 @@ class NearbyService {
   void Function(Map<String, dynamic> data)? onDataReceived;
 
   Future<bool> startAdvertising(String username) async {
-    try {
-      bool a = await Nearby().startAdvertising(
-        username,
-        strategy,
-        onConnectionInitiated: _onConnectionInitiated,
-        onConnectionResult: _onConnectionResult,
-        onDisconnected: _onDisconnected,
-        serviceId: "kineticmp",
-      );
-      if (a) status = NearbyStatus.advertising;
-      return a;
-    } catch (e) {
-      return false;
-    }
+    bool a = await Nearby().startAdvertising(
+      username,
+      strategy,
+      onConnectionInitiated: _onConnectionInitiated,
+      onConnectionResult: _onConnectionResult,
+      onDisconnected: _onDisconnected,
+      serviceId: "kineticmp",
+    );
+    if (a) status = NearbyStatus.advertising;
+    return a;
   }
 
   Future<bool> startDiscovery(String username) async {
-    try {
-      bool a = await Nearby().startDiscovery(
-        username,
-        strategy,
-        onEndpointFound: _onEndpointFound,
-        onEndpointLost: (id) => _onEndpointLost(id),
-        serviceId: "kineticmp",
-      );
-      if (a) status = NearbyStatus.discovering;
-      return a;
-    } catch (e) {
-      return false;
-    }
+    bool a = await Nearby().startDiscovery(
+      username,
+      strategy,
+      onEndpointFound: _onEndpointFound,
+      onEndpointLost: (id) => _onEndpointLost(id),
+      serviceId: "kineticmp",
+    );
+    if (a) status = NearbyStatus.discovering;
+    return a;
   }
 
   void stopAll() {

@@ -16,10 +16,13 @@ class HomeScreen extends StatelessWidget {
     final gameState = context.watch<GameState>();
 
     return Scaffold(
-      backgroundColor: KColors.surface,
       body: CustomScrollView(
         slivers: [
-          SliverToBoxAdapter(child: _buildAppBar(context)),
+          SliverToBoxAdapter(
+            child: KineticAppBar(
+              onLeaderboardTap: () => context.push('/leaderboard'),
+            ),
+          ),
           SliverPadding(
             padding: const EdgeInsets.only(bottom: 140),
             sliver: SliverList(
@@ -38,12 +41,11 @@ class HomeScreen extends StatelessWidget {
         currentIndex: 0,
         onTap: (i) {
           if (i == 1) context.go('/play');
+          if (i == 2) context.go('/settings');
         },
       ),
     );
   }
-
-  Widget _buildAppBar(BuildContext context) => const KineticAppBar();
 
   Widget _buildHeroSection(BuildContext context) {
     return Padding(

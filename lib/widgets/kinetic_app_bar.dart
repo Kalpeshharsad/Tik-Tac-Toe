@@ -40,10 +40,10 @@ class KineticAppBar extends StatelessWidget implements PreferredSizeWidget {
                           width: 1,
                         ),
                       ),
-                      child: const Icon(
-                        Icons.person_outline_rounded,
-                        color: KColors.primary,
-                        size: 20,
+                      clipBehavior: Clip.antiAlias,
+                      child: Image.asset(
+                        'assets/images/logo.png',
+                        fit: BoxFit.cover,
                       ),
                     ),
                 const SizedBox(width: 12),

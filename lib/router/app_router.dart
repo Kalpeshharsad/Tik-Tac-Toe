@@ -3,6 +3,8 @@ import 'package:kinetic_tictactoe/screens/home_screen.dart';
 import 'package:kinetic_tictactoe/screens/game_board_screen.dart';
 import 'package:kinetic_tictactoe/screens/game_results_screen.dart';
 import 'package:kinetic_tictactoe/screens/multiplayer_lobby_screen.dart';
+import 'package:kinetic_tictactoe/screens/leaderboard_screen.dart';
+import 'package:kinetic_tictactoe/screens/settings_screen.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/',
@@ -29,6 +31,16 @@ final GoRouter appRouter = GoRouter(
       path: '/lobby',
       name: 'lobby',
       builder: (context, state) => const MultiplayerLobbyScreen(),
+    ),
+    GoRoute(
+      path: '/leaderboard',
+      name: 'leaderboard',
+      builder: (context, state) => const LeaderboardScreen(),
+    ),
+    GoRoute(
+      path: '/settings',
+      name: 'settings',
+      builder: (context, state) => const SettingsScreen(),
     ),
   ],
 );

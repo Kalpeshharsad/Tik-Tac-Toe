@@ -1,0 +1,70 @@
+workflows:
+  ios-unsigned:
+    name: iOS Unsigned Build (TrollStore / Sideload)
+    max_build_duration: 60
+    environment:
+      flutter: stable
+      xcode: latest
+      vars:
+        BUNDLE_ID: "com.kinetic.tictactoe"
+
+    scripts:
+      # 1. Get Flutter dependencies
+      - name: Get dependencies
+        script: flutter pub get
+
+      # 2. Run analysis (non-fatal warnings/infos OK)
+      - name: Analyze
+        script: flutter analyze --no-fatal-infos
+
+      # 3. Build Flutter release iOS without code signing
+      - name: Build Flutter iOS (no-codesign)
+        script: |
+          flutter build ios \
+            --release \
+            --no-codesign \
+            --bundle-sksl-path=/dev/null || true
+
+          # Ensure archive dir exists
+          mkdir -p build/ios/archive/Runner.xcarchive
+
+      # 4. Archive via xcodebuild — fully unsigned
+      - name: Xcodebuild Archive (unsigned)
+        script: |
+          cd ios
+          xcodebuild \
+            -workspace Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath ../build/ios/DerivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            AD_HOC_CODE_SIGNING_ALLOWED=NO \
+            PRODUCT_BUNDLE_IDENTIFIER="$BUNDLE_ID" \
+            -archivePath ../build/ios/Runner.xcarchive \
+            archive
+
+      # 5. Package .app into unsigned IPA
+      - name: Package Unsigned IPA
+        script: |
+          APP_PATH=$(find build/ios/Runner.xcarchive/Products -name "*.app" | head -n 1)
+          mkdir -p build/ipa/Payload
+          cp -r "$APP_PATH" build/ipa/Payload/
+          cd build/ipa
+          zip -r ../../KINETIC-unsigned.ipa Payload/
+          echo "✅ IPA created: KINETIC-unsigned.ipa"
+
+    artifacts:
+      - KINETIC-unsigned.ipa
+      - build/ios/Runner.xcarchive/**
+      - flutter_drive.log
+
+    publishing:
+      email:
+        recipients:
+          - your@email.com
+        notify:
+          success: true
+          failure: true

@@ -178,7 +178,7 @@ class _RankPodium extends StatelessWidget {
               height: 140,
             ),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           // Rank 1
           Expanded(
             child: _PodiumColumn(

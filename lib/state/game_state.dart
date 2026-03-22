@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// Tracks whose turn it is, board state, scores, win detection.
 class GameState extends ChangeNotifier {
@@ -38,10 +39,13 @@ class GameState extends ChangeNotifier {
   ];
 
   // ── Actions ───────────────────────────────────────────────────────────────
-  bool makeMove(int index) {
+  bool makeMove(int index, {bool hapticsEnabled = true}) {
     if (_board[index] != null || _gameOver) return false;
     _board[index] = _currentPlayer;
     _moveCount++;
+    if (hapticsEnabled) {
+      HapticFeedback.lightImpact();
+    }
     _checkResult();
     if (!_gameOver) {
       _currentPlayer = _currentPlayer == 'X' ? 'O' : 'X';

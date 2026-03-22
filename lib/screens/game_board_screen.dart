@@ -10,6 +10,8 @@ import 'package:kinetic_tictactoe/widgets/kinetic_app_bar.dart';
 import 'package:kinetic_tictactoe/widgets/bottom_nav_bar.dart';
 import 'package:kinetic_tictactoe/widgets/game_tile.dart';
 import 'package:kinetic_tictactoe/widgets/win_line_painter.dart';
+import 'package:kinetic_tictactoe/state/settings_state.dart';
+import 'package:kinetic_tictactoe/utils/sound_manager.dart';
 
 class GameBoardScreen extends StatefulWidget {
   final bool vsAI;
@@ -65,13 +67,17 @@ class _GameBoardScreenState extends State<GameBoardScreen>
 
   void _onTileTap(int index) {
     final gs = context.read<GameState>();
+    final settings = context.read<SettingsState>();
     if (gs.gameOver) return;
     if (widget.vsAI && gs.currentPlayer == 'O') return;
 
-    final moved = gs.makeMove(index);
-    if (moved && gs.gameOver) {
-      _onGameOver(gs);
-      return;
+    final moved = gs.makeMove(index, hapticsEnabled: settings.hapticsEnabled);
+    if (moved) {
+      if (settings.soundFxEnabled) SoundManager.instance.playMove();
+      if (gs.gameOver) {
+        _onGameOver(gs, settings);
+        return;
+      }
     }
 
     // AI turn
@@ -79,14 +85,24 @@ class _GameBoardScreenState extends State<GameBoardScreen>
       _aiTimer = Timer(const Duration(milliseconds: 500), () {
         final aiMove = _ai.getBestMove(List<String?>.from(gs.board));
         if (aiMove >= 0) {
-          gs.makeMove(aiMove);
-          if (gs.gameOver) _onGameOver(gs);
+          final aiMoved = gs.makeMove(aiMove, hapticsEnabled: settings.hapticsEnabled);
+          if (aiMoved) {
+            if (settings.soundFxEnabled) SoundManager.instance.playMove();
+            if (gs.gameOver) _onGameOver(gs, settings);
+          }
         }
       });
     }
   }
 
-  void _onGameOver(GameState gs) async {
+  void _onGameOver(GameState gs, SettingsState settings) async {
+    if (settings.soundFxEnabled) {
+      if (gs.isDraw) {
+        SoundManager.instance.playDraw();
+      } else {
+        SoundManager.instance.playWin();
+      }
+    }
     await _winCtrl.forward(from: 0);
     await Future.delayed(const Duration(milliseconds: 800));
     if (mounted) {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
 import 'package:kinetic_tictactoe/theme/app_theme.dart';
 
 class KineticAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -59,14 +60,27 @@ class KineticAppBar extends StatelessWidget implements PreferredSizeWidget {
                 ),
               ],
             ),
-            // Leaderboard icon
-            GestureDetector(
-              onTap: onLeaderboardTap,
-              child: const Icon(
-                Icons.leaderboard_outlined,
-                color: KColors.primary,
-                size: 24,
-              ),
+            // Action Icons (Leaderboard & Settings)
+            Row(
+              children: [
+                GestureDetector(
+                  onTap: onLeaderboardTap,
+                  child: const Icon(
+                    Icons.leaderboard_outlined,
+                    color: KColors.primary,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                GestureDetector(
+                  onTap: () => context.push('/settings'),
+                  child: const Icon(
+                    Icons.settings_outlined,
+                    color: KColors.primary,
+                    size: 24,
+                  ),
+                ),
+              ],
             ),
           ],
         ),

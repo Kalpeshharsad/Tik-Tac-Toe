@@ -66,14 +66,25 @@ class PeerService extends ChangeNotifier {
     });
 
     conn.on("data").listen((dynamic data) {
-      final String jsonStr = data as String;
-      final payload = jsonDecode(jsonStr) as Map<String, dynamic>;
+      Map<String, dynamic> payload;
+      try {
+        if (data is String) {
+          payload = jsonDecode(data) as Map<String, dynamic>;
+        } else if (data is Map) {
+          payload = Map<String, dynamic>.from(data);
+        } else {
+          debugPrint("Unknown data type received: ${data.runtimeType}");
+          return;
+        }
+      } catch (e) {
+        debugPrint("Error decoding peer data: $e");
+        return;
+      }
 
       if (payload['type'] == 'init') {
         opponentUsername = payload['username'] as String;
         notifyListeners();
         
-        // Host might need to send back their username too
         if (currentRoomCode != null && payload['reply'] != true) {
           _sendInternalMessage({"type": "init", "username": myUsername, "reply": true});
         }

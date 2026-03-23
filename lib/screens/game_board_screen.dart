@@ -47,49 +47,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
     // Start timer
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _startTimer();
-      _setupMultiplayer();
     });
-  }
-
-  void _setupMultiplayer() {
-    final gs = context.read<GameState>();
-    if (!gs.isMultiplayer) return;
-
-    final peerService = PeerService();
-    
-    // Send local moves
-    gs.onMoveMade = (index) {
-      peerService.sendMessage({'type': 'move', 'index': index});
-    };
-
-    peerService.onDataReceived = (data) {
-      if (data['type'] == 'move') {
-        final index = data['index'] as int;
-        final settings = context.read<SettingsState>();
-        gs.makeMove(index, hapticsEnabled: settings.hapticsEnabled, isRemote: true);
-        if (settings.soundFxEnabled) SoundManager.instance.playMove();
-        if (gs.gameOver) {
-          _onGameOver(gs, settings);
-        }
-      } else if (data['type'] == 'emoji') {
-        _showRemoteEmoji(data['emoji'] as String);
-      }
-    };
-
-    peerService.onConnectionLost = () {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Opponent disconnected')),
-        );
-        context.go('/lobby');
-      }
-    };
-  }
-
-  void _showRemoteEmoji(String emoji) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Opponent says: $emoji'), duration: const Duration(seconds: 1)),
-    );
   }
 
   void _startTimer() {
@@ -116,7 +74,8 @@ class _GameBoardScreenState extends State<GameBoardScreen>
     // Block input if not my turn in multiplayer
     if (gs.isMultiplayer && !gs.isMyTurn) return;
     
-    if (widget.vsAI && gs.currentPlayer == 'O') return;
+    // Fix: only block for AI if NOT in multiplayer
+    if (!gs.isMultiplayer && widget.vsAI && gs.currentPlayer == 'O') return;
 
     final moved = gs.makeMove(index, hapticsEnabled: settings.hapticsEnabled);
     if (moved) {
@@ -127,8 +86,8 @@ class _GameBoardScreenState extends State<GameBoardScreen>
       }
     }
 
-    // AI turn
-    if (moved && widget.vsAI && !gs.gameOver) {
+    // AI turn (only if not multiplayer)
+    if (!gs.isMultiplayer && moved && widget.vsAI && !gs.gameOver) {
       _aiTimer = Timer(const Duration(milliseconds: 500), () {
         final aiMove = _ai.getBestMove(List<String?>.from(gs.board));
         if (aiMove >= 0) {
@@ -316,7 +275,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      isOTurn ? 'YOUR TURN' : (widget.vsAI ? 'KINETIC AI' : 'PLAYER 2'),
+                      isOTurn ? 'YOUR TURN' : (gs.isMultiplayer ? 'OPPONENT' : (widget.vsAI ? 'KINETIC AI' : 'PLAYER 2')),
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,

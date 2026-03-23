@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:kinetic_tictactoe/services/peer_service.dart';
 
 /// Tracks whose turn it is, board state, scores, win detection.
 class GameState extends ChangeNotifier {
@@ -62,7 +63,7 @@ class GameState extends ChangeNotifier {
     
     // Notify multiplayer service if this was a local move
     if (_isMultiplayer && !isRemote) {
-      onMoveMade?.call(index);
+      PeerService().sendMessage({'type': 'move', 'index': index});
     }
 
     if (!_gameOver) {
@@ -75,13 +76,29 @@ class GameState extends ChangeNotifier {
   void setupMultiplayer(String mySign) {
     _isMultiplayer = true;
     _mySign = mySign;
+    _setupPeerListeners();
     resetAll();
+  }
+
+  void _setupPeerListeners() {
+    final peerService = PeerService();
+    peerService.onDataReceived = (data) {
+      if (data['type'] == 'move') {
+        final index = data['index'] as int;
+        // In GameState we can't easily access SettingsState directly without passing it,
+        // but for basic move sync we can default haptics to true or false.
+        makeMove(index, isRemote: true);
+        
+        // Note: Sound normally playing in UI, but if GameState is the source of truth,
+        // we might want a way to notify UI to play sound.
+      }
+    };
   }
 
   void disableMultiplayer() {
     _isMultiplayer = false;
     _mySign = null;
-    onMoveMade = null;
+    PeerService().onDataReceived = null;
   }
 
   void _checkResult() {

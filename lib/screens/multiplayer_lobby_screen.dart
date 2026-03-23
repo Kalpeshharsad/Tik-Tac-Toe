@@ -64,7 +64,7 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen>
       final gameState = context.read<GameState>();
       // Host is always X
       gameState.setupMultiplayer('X');
-      if (mounted) context.go('/play');
+      if (mounted) context.go('/play?vsAI=false');
     };
 
     svc.startHosting(username);
@@ -93,7 +93,7 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen>
       final gameState = context.read<GameState>();
       // Joiner is always O
       gameState.setupMultiplayer('O');
-      if (mounted) context.go('/play');
+      if (mounted) context.go('/play?vsAI=false');
     };
 
     svc.joinRoom(username, code);

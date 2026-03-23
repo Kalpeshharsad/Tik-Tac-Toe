@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Kinetic Multiplayer Lobby</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "tertiary-dim": "#24f07e",
+              "on-tertiary": "#006731",
+              "inverse-primary": "#006976",
+              "surface-container": "#171a1c",
+              "on-secondary-fixed-variant": "#7a4300",
+              "surface-dim": "#0c0e10",
+              "on-error": "#490006",
+              "on-tertiary-fixed": "#004820",
+              "primary-fixed-dim": "#00d4ec",
+              "surface-container-highest": "#232629",
+              "on-tertiary-fixed-variant": "#006832",
+              "on-primary": "#005762",
+              "on-surface": "#eeeef0",
+              "on-primary-fixed": "#003840",
+              "surface": "#0c0e10",
+              "error": "#ff716c",
+              "error-container": "#9f0519",
+              "surface-container-lowest": "#000000",
+              "on-secondary": "#462400",
+              "on-secondary-container": "#fff6f1",
+              "on-secondary-fixed": "#512a00",
+              "secondary-dim": "#ea8400",
+              "on-surface-variant": "#aaabad",
+              "background": "#0c0e10",
+              "on-primary-fixed-variant": "#005762",
+              "on-error-container": "#ffa8a3",
+              "primary": "#81ecff",
+              "on-primary-container": "#004d57",
+              "outline-variant": "#46484a",
+              "inverse-on-surface": "#535557",
+              "secondary": "#fd9000",
+              "surface-bright": "#292c2f",
+              "inverse-surface": "#f9f9fc",
+              "primary-dim": "#00d4ec",
+              "surface-container-high": "#1d2022",
+              "on-background": "#eeeef0",
+              "primary-container": "#00e3fd",
+              "on-tertiary-container": "#005d2c",
+              "tertiary-container": "#3fff8b",
+              "tertiary-fixed": "#3fff8b",
+              "tertiary": "#b5ffc2",
+              "error-dim": "#d7383b",
+              "surface-container-low": "#111416",
+              "secondary-container": "#8e4e00",
+              "secondary-fixed": "#ffc697",
+              "surface-variant": "#232629",
+              "surface-tint": "#81ecff",
+              "secondary-fixed-dim": "#ffb470",
+              "tertiary-fixed-dim": "#24f07e",
+              "primary-fixed": "#00e3fd",
+              "outline": "#747578"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Plus Jakarta Sans"],
+              "label": ["Plus Jakarta Sans"]
+            },
+            borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #0c0e10;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            color: #eeeef0;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="bg-[#0c0e10] dark:bg-[#0c0e10] sticky top-0 z-50">
+<div class="flex justify-between items-center px-6 py-4 w-full bg-[#111416]">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center overflow-hidden">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="Cyberpunk style male avatar with neon accents" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAMNLvUelJc_UEDSmwfrSQicg0HN4_JfRjwN66ll9damuBFGQ84I89vIpkLdrZbtQ1IF4qsmAk-pDnEs5Am8-TXSW8fpddTebntpwQUAOVOJNOPgOoZavPHA-Kyv1aCGcFbcarlfgJEhZNY-UBwYtZjXgbpvMiCE4x6MYtBm7rBb7QONhoqw8oodlQhFBba_bKmo3HC2MLK6SYxqAYIJKO-9O8gXYUm8j3SgWuD4LAao_L8IbzEbSPYYQpE9XBXVljBfPjYwdK4BZiY"/>
+</div>
+<h1 class="font-black italic text-[#00E5FF] text-2xl tracking-tighter">KINETIC</h1>
+</div>
+<button class="text-[#00E5FF] hover:opacity-80 transition-opacity active:scale-95">
+<span class="material-symbols-outlined" data-icon="leaderboard">leaderboard</span>
+</button>
+</div>
+</header>
+<main class="flex-1 px-6 pt-8 pb-32 max-w-5xl mx-auto w-full">
+<!-- Searching Status Section -->
+<section class="mb-10">
+<div class="bg-surface-container-low rounded-lg p-8 flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden relative">
+<div class="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
+<div class="relative z-10 text-center md:text-left">
+<h2 class="text-on-surface-variant font-medium mb-1 uppercase tracking-widest text-xs">Matchmaking</h2>
+<p class="text-3xl font-bold text-on-surface leading-tight">Searching for Opponent...</p>
+<div class="flex items-center gap-2 mt-4 text-primary">
+<span class="relative flex h-3 w-3">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+</span>
+<span class="text-sm font-semibold">ETA: 0:42</span>
+</div>
+</div>
+<div class="relative z-10 flex gap-4">
+<button class="bg-tertiary text-on-tertiary px-8 py-4 rounded-md font-bold text-sm tracking-wide active:scale-95 transition-all flex items-center gap-2 shadow-lg shadow-tertiary/20">
+<span class="material-symbols-outlined text-xl" data-icon="add_box">add_box</span>
+                        CREATE PRIVATE ROOM
+                    </button>
+</div>
+</div>
+</section>
+<!-- Search & Filter Cluster -->
+<div class="flex flex-col md:flex-row gap-4 mb-8 items-end">
+<div class="w-full md:flex-1">
+<label class="block text-on-surface-variant text-[10px] uppercase font-bold tracking-[0.2em] mb-3 ml-1">Find Players</label>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant group-focus-within:text-primary transition-colors" data-icon="search">search</span>
+<input class="w-full bg-surface-container-high border-none rounded-md py-4 pl-12 pr-4 text-on-surface placeholder:text-on-surface-variant/50 focus:ring-2 focus:ring-primary/30 focus:bg-surface-bright transition-all" placeholder="Search by username or ID..." type="text"/>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="bg-surface-container-high p-4 rounded-md text-on-surface-variant hover:text-on-surface transition-colors active:scale-95">
+<span class="material-symbols-outlined" data-icon="tune">tune</span>
+</button>
+</div>
+</div>
+<!-- Players Grid (Asymmetric Editorial Style) -->
+<h3 class="text-on-surface-variant text-[10px] uppercase font-bold tracking-[0.2em] mb-6 ml-1">Active Now (142)</h3>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<!-- Player Card 1 -->
+<div class="bg-surface-container-low p-6 rounded-lg group hover:bg-surface-container-high transition-all duration-300 relative overflow-hidden border border-white/5">
+<div class="flex justify-between items-start mb-6">
+<div class="relative">
+<img alt="Luna" class="w-16 h-16 rounded-md bg-surface-container-high" data-alt="Cool female avatar with neon goggles and blue hair" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCx_5A9m3Y0d48_HxuG8FZUsIRw8ANDJNFmR1CtbMo9ZzT3tquUM058OAkZoro2Mq5HuUZw31p4Of4NJx7SxMzFCmL0ANFfHFxv8bq_K8Cn7AqsUutEdLn_PbNjtvMSCnfkM7Xu6bBXiVoAHFY-Gh8If3X48E_GbDcc5WNJkrClwyeCqPHvRq4o07VJL5TLeTyAx7Nhd1wW_rxPQQ3E8e0AnNqCaBpu9tUpmLffp5ugpTCA5tL9QQws9-QsMu8tJV6tpWsRpFd3leU4"/>
+<div class="absolute -bottom-1 -right-1 bg-tertiary-fixed w-4 h-4 rounded-full border-4 border-surface-container-low group-hover:border-surface-container-high transition-colors"></div>
+</div>
+<div class="bg-primary/10 text-primary px-3 py-1 rounded-full text-[10px] font-black italic tracking-tighter">LVL 42</div>
+</div>
+<div class="mb-6">
+<h4 class="text-xl font-bold text-on-surface mb-1">CyberLuna_99</h4>
+<p class="text-on-surface-variant text-xs flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="workspace_premium">workspace_premium</span>
+                        Master Tactician
+                    </p>
+</div>
+<button class="w-full bg-surface-bright border border-outline-variant/20 py-3 rounded-md font-bold text-xs uppercase tracking-widest text-primary hover:bg-primary/10 transition-all active:scale-95">
+                    Challenge
+                </button>
+</div>
+<!-- Player Card 2 -->
+<div class="bg-surface-container-low p-6 rounded-lg group hover:bg-surface-container-high transition-all duration-300 relative overflow-hidden border border-white/5">
+<div class="flex justify-between items-start mb-6">
+<div class="relative">
+<img alt="Jax" class="w-16 h-16 rounded-md bg-surface-container-high" data-alt="Stoic male avatar with a mechanical eye" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDbrQscATWDrV_vHboBEVhHgB-2thwDQjhK1cpcW49xvCGCv7py1la3eRLe_6s4cn3c6_VM2KK4EZ2nvNeoE9Rqh0iCfyIISeUsxDWwZyqjIwJZfZ_2U_wtkR5iMXDJpaMAq7O2Hai3SgsLS2lYmQ6P6a3ZhkI292TZseuQuRyGZ11f-wLVqjyi3yIj5K9XTr1p3B0U65PuTPNLqs70388BSUYVzBYrFPpv01-eAXLLkUrHPPmpvLAw9Fbfehi2UHLSo8HwykK2BVjX"/>
+<div class="absolute -bottom-1 -right-1 bg-tertiary-fixed w-4 h-4 rounded-full border-4 border-surface-container-low group-hover:border-surface-container-high transition-colors"></div>
+</div>
+<div class="bg-secondary/10 text-secondary px-3 py-1 rounded-full text-[10px] font-black italic tracking-tighter">LVL 18</div>
+</div>
+<div class="mb-6">
+<h4 class="text-xl font-bold text-on-surface mb-1">Jax_Volt</h4>
+<p class="text-on-surface-variant text-xs flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="history">history</span>
+                        Last played 2m ago
+                    </p>
+</div>
+<button class="w-full bg-surface-bright border border-outline-variant/20 py-3 rounded-md font-bold text-xs uppercase tracking-widest text-primary hover:bg-primary/10 transition-all active:scale-95">
+                    Challenge
+                </button>
+</div>
+<!-- Player Card 3 (Featured/Editorial style) -->
+<div class="bg-gradient-to-br from-primary/20 to-surface-container-low p-6 rounded-lg group hover:from-primary/30 transition-all duration-300 relative overflow-hidden border border-primary/20">
+<div class="absolute top-2 right-4 text-primary/40 font-black italic text-4xl select-none opacity-20">ELITE</div>
+<div class="flex justify-between items-start mb-6">
+<div class="relative">
+<img alt="Neo" class="w-16 h-16 rounded-md bg-surface-container-high" data-alt="Avatar with futuristic VR headset and sleek hoodie" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAlr20SrZxUmlgbI82i0f4wrE8PMNFsFsjK7VTZxCx48kg80cdJReUh31Th8DmXHv0CP00GiYad3iaxi0xZH5hz8Kfus3D_7b1k6bQ7xnAX_nC-xdBFxKNkAW9BCKKieZY-fOU9Pc-tQG-NtDBSd29w04Q1XtfJzCh3yOnXdPrpGWiumucofKe13p4JnlPgNgdgl3nqcZdJDq_FlhOT8pNIC2QL_NQ7aNRD8k6s2CmM8A0loigLn5S_MFehTdnj5eXY2AfDtub6BOkv"/>
+<div class="absolute -bottom-1 -right-1 bg-tertiary-fixed w-4 h-4 rounded-full border-4 border-surface-container-low group-hover:border-surface-container-high transition-colors"></div>
+</div>
+<div class="bg-primary text-on-primary px-3 py-1 rounded-full text-[10px] font-black italic tracking-tighter">PRO</div>
+</div>
+<div class="mb-6">
+<h4 class="text-xl font-bold text-on-surface mb-1">NeoKinetiX</h4>
+<p class="text-on-surface-variant text-xs flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="star">star</span>
+                        Top 1% Global Rank
+                    </p>
+</div>
+<button class="w-full bg-primary text-on-primary py-3 rounded-md font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-all active:scale-95">
+                    Challenge Elite
+                </button>
+</div>
+<!-- Player Card 4 -->
+<div class="bg-surface-container-low p-6 rounded-lg group hover:bg-surface-container-high transition-all duration-300 relative overflow-hidden border border-white/5">
+<div class="flex justify-between items-start mb-6">
+<div class="relative">
+<img alt="Zora" class="w-16 h-16 rounded-md bg-surface-container-high" data-alt="Female avatar with pink bob hair and cyberpunk accessories" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDmm8zCqROGgoR-mKXNM7kMOiyQEUkIxAsIag8QOXQ4mVRQyB7sAFYfP6Xd3hBhlx9FHD_55qsAhOpSzQ7nqzmbpwK6X5rRbUxGC2sOrz5_H8DIIcdGp_Tw2yKlOfBKS22TVgTCbKCDpylFls6DbTtBdKi7OSUKv1WUefo06_aTTKEt7AkTSZUwvDsAbOP86-7EG4rKlLsWcS_ojP319J1Zb_2vHxb6sxtxF2g0bW8MoI_8bc1FEL0hBuJJlYxRwpwMYpMv9J8iELUi"/>
+<div class="absolute -bottom-1 -right-1 bg-tertiary-fixed w-4 h-4 rounded-full border-4 border-surface-container-low group-hover:border-surface-container-high transition-colors"></div>
+</div>
+<div class="bg-primary/10 text-primary px-3 py-1 rounded-full text-[10px] font-black italic tracking-tighter">LVL 67</div>
+</div>
+<div class="mb-6">
+<h4 class="text-xl font-bold text-on-surface mb-1">Zora_The_Grid</h4>
+<p class="text-on-surface-variant text-xs flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="bolt">bolt</span>
+                        Win Streak: 5
+                    </p>
+</div>
+<button class="w-full bg-surface-bright border border-outline-variant/20 py-3 rounded-md font-bold text-xs uppercase tracking-widest text-primary hover:bg-primary/10 transition-all active:scale-95">
+                    Challenge
+                </button>
+</div>
+<!-- Player Card 5 -->
+<div class="bg-surface-container-low p-6 rounded-lg group hover:bg-surface-container-high transition-all duration-300 relative overflow-hidden border border-white/5">
+<div class="flex justify-between items-start mb-6">
+<div class="relative">
+<img alt="Spark" class="bg-surface-container-high w-16 h-16 rounded-md" data-alt="Stylized character with electric patterns on face" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAz9OoAQq5TkXcfXmNKw7f9C4XcRZ7lxtsVCiZ0PFiSZesu8a9PvHinpnEBQLpUQQy9oRQjGCtoZj54tej8sCObalM7f_m6wY-7ZGdsR6IWjUXq5utlwJ_00gbhrQ6g9OvKTWIZbHgEJcU2r1WRxDwDr_DPji6dHfZhR4P0aQBgMk1TgzdywZB7iFkRcmYBlxZmE_tFm_dXDpjG0Zun87L7nYiaKX7BPKvwhgIoo_sbr-oHo9P7Y1WuD1s91SOMzHT55pIGqRx1Lxo6"/>
+<div class="absolute -bottom-1 -right-1 bg-slate-500 w-4 h-4 rounded-full border-4 border-surface-container-low group-hover:border-surface-container-high transition-colors"></div>
+</div>
+<div class="bg-primary/10 text-primary px-3 py-1 rounded-full text-[10px] font-black italic tracking-tighter">LVL 04</div>
+</div>
+<div class="mb-6">
+<h4 class="text-xl font-bold text-on-surface mb-1">Sparky_Rook</h4>
+<p class="text-on-surface-variant text-xs flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="schedule">schedule</span>
+                        Offline
+                    </p>
+</div>
+<button class="w-full bg-surface-container-highest/50 border border-outline-variant/10 py-3 rounded-md font-bold text-xs uppercase tracking-widest text-on-surface-variant/50 cursor-not-allowed">
+                    Challenge
+                </button>
+</div>
+<!-- Player Card 6 -->
+<div class="bg-surface-container-low p-6 rounded-lg group hover:bg-surface-container-high transition-all duration-300 relative overflow-hidden border border-white/5">
+<div class="flex justify-between items-start mb-6">
+<div class="relative">
+<img alt="Ghost" class="w-16 h-16 rounded-md bg-surface-container-high" data-alt="Mysterious avatar with hooded cloak and glowing eyes" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7l9nnqAvGAA8ar7IG0TozPLAVnAWyL1uUop2ZfsG1AYfRcG3ElYkV53Ga6hq1KUGs6XIqc3YEsChQgAbn5wTDh5hMsIYNhY8aVx8jAS6TTWUtsGNNwn88p6AyZatUi5dLzpsV_9iba5eTe0cOv614T-MPjv9eN-ngsvSXURBHcS7bcrbNhS56mvem9SlAvqJUXVBMD-oWtUAtC1xFG0LrX1QSosjiKfUnndShNHf0hZKQsMiNzPeez7BREnt9H9SXSyuPIjetoV2c"/>
+<div class="absolute -bottom-1 -right-1 bg-tertiary-fixed w-4 h-4 rounded-full border-4 border-surface-container-low group-hover:border-surface-container-high transition-colors"></div>
+</div>
+<div class="bg-primary/10 text-primary px-3 py-1 rounded-full text-[10px] font-black italic tracking-tighter">LVL 24</div>
+</div>
+<div class="mb-6">
+<h4 class="text-xl font-bold text-on-surface mb-1">Silent_Ghost</h4>
+<p class="text-on-surface-variant text-xs flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="shield">shield</span>
+                        Defense Specialist
+                    </p>
+</div>
+<button class="w-full bg-surface-bright border border-outline-variant/20 py-3 rounded-md font-bold text-xs uppercase tracking-widest text-primary hover:bg-primary/10 transition-all active:scale-95">
+                    Challenge
+                </button>
+</div>
+</div>
+<!-- Pagination/Load More (Editorial Style) -->
+<div class="mt-12 flex justify-center">
+<button class="group flex flex-col items-center gap-2 text-on-surface-variant hover:text-primary transition-all">
+<span class="text-[10px] font-bold uppercase tracking-[0.3em]">Load More Players</span>
+<span class="material-symbols-outlined text-3xl animate-bounce" data-icon="expand_more">expand_more</span>
+</button>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-8 pt-4 bg-[#111416]/90 backdrop-blur-xl shadow-[0_-10px_40px_rgba(0,0,0,0.4)] rounded-t-[2rem]">
+<a class="flex flex-col items-center justify-center text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-['Plus_Jakarta_Sans'] font-medium text-[12px]">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-[#00E5FF]/10 text-[#00E5FF] rounded-full px-6 py-2 scale-110 duration-300 ease-out" href="#">
+<span class="material-symbols-outlined" data-icon="sports_esports" style="font-variation-settings: 'FILL' 1;">sports_esports</span>
+<span class="font-['Plus_Jakarta_Sans'] font-medium text-[12px]">Play</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-['Plus_Jakarta_Sans'] font-medium text-[12px]">Settings</span>
+</a>
+</nav>
+</body></html>

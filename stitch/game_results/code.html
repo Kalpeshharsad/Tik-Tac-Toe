@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>KINETIC - Game Results</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "tertiary-dim": "#24f07e",
+              "on-tertiary": "#006731",
+              "inverse-primary": "#006976",
+              "surface-container": "#171a1c",
+              "on-secondary-fixed-variant": "#7a4300",
+              "surface-dim": "#0c0e10",
+              "on-error": "#490006",
+              "on-tertiary-fixed": "#004820",
+              "primary-fixed-dim": "#00d4ec",
+              "surface-container-highest": "#232629",
+              "on-tertiary-fixed-variant": "#006832",
+              "on-primary": "#005762",
+              "on-surface": "#eeeef0",
+              "on-primary-fixed": "#003840",
+              "surface": "#0c0e10",
+              "error": "#ff716c",
+              "error-container": "#9f0519",
+              "surface-container-lowest": "#000000",
+              "on-secondary": "#462400",
+              "on-secondary-container": "#fff6f1",
+              "on-secondary-fixed": "#512a00",
+              "secondary-dim": "#ea8400",
+              "on-surface-variant": "#aaabad",
+              "background": "#0c0e10",
+              "on-primary-fixed-variant": "#005762",
+              "on-error-container": "#ffa8a3",
+              "primary": "#81ecff",
+              "on-primary-container": "#004d57",
+              "outline-variant": "#46484a",
+              "inverse-on-surface": "#535557",
+              "secondary": "#fd9000",
+              "surface-bright": "#292c2f",
+              "inverse-surface": "#f9f9fc",
+              "primary-dim": "#00d4ec",
+              "surface-container-high": "#1d2022",
+              "on-background": "#eeeef0",
+              "primary-container": "#00e3fd",
+              "on-tertiary-container": "#005d2c",
+              "tertiary-container": "#3fff8b",
+              "tertiary-fixed": "#3fff8b",
+              "tertiary": "#b5ffc2",
+              "error-dim": "#d7383b",
+              "surface-container-low": "#111416",
+              "secondary-container": "#8e4e00",
+              "secondary-fixed": "#ffc697",
+              "surface-variant": "#232629",
+              "surface-tint": "#81ecff",
+              "secondary-fixed-dim": "#ffb470",
+              "tertiary-fixed-dim": "#24f07e",
+              "primary-fixed": "#00e3fd",
+              "outline": "#747578"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Plus Jakarta Sans"],
+              "label": ["Plus Jakarta Sans"]
+            },
+            borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .bg-celebration {
+            background: radial-gradient(circle at 50% 50%, rgba(0, 227, 253, 0.15) 0%, rgba(12, 14, 16, 1) 70%);
+        }
+        .glass-card {
+            background: rgba(29, 32, 34, 0.6);
+            backdrop-filter: blur(20px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface font-body selection:bg-primary selection:text-on-primary-container overflow-hidden">
+<!-- TopAppBar Shell (Suppressed based on Transactional/Linear Rule, but KINETIC brand remains as anchor) -->
+<header class="bg-[#0c0e10] flex justify-between items-center px-6 py-6 w-full fixed top-0 z-50">
+<div class="font-black italic text-[#00E5FF] text-2xl tracking-tighter">KINETIC</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-slate-400" data-icon="leaderboard">leaderboard</span>
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center overflow-hidden border border-outline-variant/20">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="Stylized character avatar for user profile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCY3xLJBoeJmYDfyrUtX70AzVTIN5jJ2duGVtOuIDs24QvnSRNXw2MQQ4uNXmOBsqkKCRkIF4pJhgBN4O7nAilLB9k3y_OGXXZKTql6UsqNs53cPJoNK_1oYe1A2x_wb7geVFJgvBvokfUzxyIo28wC1YIiz8Lwy2AGArIikBefwDLetMw2i3W5cxBC73VH5y4lUaXH8WyhXNaMlTdi7DgTK13pxcCGoCpucTB4ogYgW9B7Ov9SE-N_ZA_Mp1M66AryIKimzVWss4uS"/>
+</div>
+</div>
+</header>
+<main class="relative min-h-screen flex flex-col items-center justify-center px-6 pt-20 pb-12 bg-celebration">
+<!-- Victory Section -->
+<section class="w-full max-w-lg flex flex-col items-center text-center relative">
+<!-- Confetti/Burst Placeholder (Visual Only) -->
+<div class="absolute -top-12 inset-x-0 flex justify-center opacity-30 pointer-events-none">
+<div class="w-64 h-64 bg-primary blur-[120px] rounded-full"></div>
+</div>
+<div class="relative mb-8">
+<!-- Winner Icon Overlay -->
+<div class="absolute -top-6 -right-6 bg-tertiary-container text-on-tertiary-container px-4 py-1 rounded-full text-xs font-bold tracking-widest shadow-lg rotate-12">
+                    MVP
+                </div>
+<div class="w-32 h-32 rounded-xl bg-gradient-to-br from-primary to-primary-container p-1 shadow-[0_0_50px_rgba(0,227,253,0.3)]">
+<div class="w-full h-full bg-surface rounded-[calc(1rem-4px)] flex items-center justify-center">
+<span class="material-symbols-outlined text-6xl text-primary" style="font-variation-settings: 'FILL' 1;">emoji_events</span>
+</div>
+</div>
+</div>
+<h1 class="font-headline font-black text-6xl md:text-7xl mb-2 tracking-tighter text-on-surface">
+                Winner!
+            </h1>
+<p class="text-on-surface-variant text-lg font-medium mb-12">
+                You dominated the grid in record time.
+            </p>
+<!-- Stats Bento Grid -->
+<div class="grid grid-cols-2 gap-4 w-full mb-12">
+<div class="surface-container-low rounded-lg p-6 flex flex-col items-start justify-between border border-outline-variant/10">
+<span class="material-symbols-outlined text-primary mb-4" data-icon="timer">timer</span>
+<div>
+<div class="text-3xl font-black text-on-surface">0:42</div>
+<div class="text-xs uppercase tracking-widest font-bold text-on-surface-variant">Time Taken</div>
+</div>
+</div>
+<div class="surface-container-low rounded-lg p-6 flex flex-col items-start justify-between border border-outline-variant/10">
+<span class="material-symbols-outlined text-secondary mb-4" data-icon="ads_click">ads_click</span>
+<div>
+<div class="text-3xl font-black text-on-surface">5</div>
+<div class="text-xs uppercase tracking-widest font-bold text-on-surface-variant">Total Moves</div>
+</div>
+</div>
+<div class="col-span-2 glass-card rounded-lg p-6 flex items-center justify-between border border-primary/20">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center">
+<span class="material-symbols-outlined text-tertiary" style="font-variation-settings: 'FILL' 1;">stars</span>
+</div>
+<div class="text-left">
+<div class="text-xl font-bold text-on-surface">+250 XP</div>
+<div class="text-xs text-on-surface-variant">Rank Progress: Gold II</div>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="chevron_right">chevron_right</span>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="flex flex-col gap-4 w-full">
+<button class="w-full bg-tertiary text-on-tertiary font-bold py-5 rounded-md text-lg active:scale-95 transition-all shadow-[0_10px_30px_rgba(181,255,194,0.2)]">
+                    Play Again
+                </button>
+<button class="w-full bg-surface-bright text-on-surface font-bold py-5 rounded-md text-lg border border-outline-variant/20 active:scale-95 transition-all">
+                    Back to Lobby
+                </button>
+</div>
+</section>
+<!-- Player Comparison (Floating Glass) -->
+<section class="mt-12 w-full max-w-lg">
+<div class="flex items-center justify-between px-4 py-2 opacity-60">
+<span class="text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">Match History</span>
+<div class="h-[1px] flex-grow mx-4 bg-outline-variant/30"></div>
+</div>
+<div class="flex justify-between items-center p-4">
+<div class="flex items-center gap-3">
+<div class="relative">
+<img class="w-10 h-10 rounded-full border-2 border-primary" data-alt="Avatar of the winning player" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCBx59KW9PwSwOx8y8Ai0r3dXwI_kcO5mTSvzxHuaKT96J8hrBbVkXwyQVGhBKlyZwrXbghGkRTKAZJxQ6xcCAomHNqwOEgg_c0GrpepVKGZ-rDFOimQpxq8JpyU-4syOat9z_nHvj734o6pBAs2XSodrUSQe7G2u_kGpRIyB294GslBSqZbOm3IF1Xh7veaJ1gPcglTlpeYrui814mCMgQP9_T7VzSuo6FgRvTBpU-i1sX6LaSuMAKvjvvO7A-McpbcRiwjLHDm3z_"/>
+<div class="absolute -bottom-1 -right-1 w-4 h-4 bg-tertiary-fixed rounded-full border-2 border-surface flex items-center justify-center">
+<span class="material-symbols-outlined text-[8px] text-on-tertiary font-bold" style="font-variation-settings: 'wght' 700;">check</span>
+</div>
+</div>
+<div class="text-left">
+<div class="text-sm font-bold">You (X)</div>
+<div class="text-[10px] text-primary font-bold uppercase">Winner</div>
+</div>
+</div>
+<div class="text-on-surface-variant font-black text-xl italic tracking-tighter">VS</div>
+<div class="flex items-center gap-3 text-right flex-row-reverse">
+<img class="w-10 h-10 rounded-full border-2 border-outline-variant" data-alt="Avatar of the losing player" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDuS_WclfgV4IoexdhbLzZHfID5RX1zlxHz3luKugSDEg5cp8l7femkywaibYVat_Q6PMX2bRwKhgchkWRqglKTK2Rp0Dvk_uW6OGoF_kwu34LLNcljqSnyXx3FYU5NzaP2ZiBOXVH5c2wiMaoRGmxwesYuOUlp_cS6sNdXEacEXY9C6U9Cyc1hGKBokV6lT-O7M6HUDYy8ahi8X658awure_-11ntgshG_2bSPB0gkLwSgyiND0KXOfInBKs_54L0BoVt2Ru-cFKvC"/>
+<div class="text-right">
+<div class="text-sm font-bold">Bot_Aura (O)</div>
+<div class="text-[10px] text-on-surface-variant font-bold uppercase">Runner Up</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (Suppressed based on Transactional/Task focus rule for Game Results) -->
+<!-- However, providing a minimal footer for legal/versioning as per high-end practice -->
+<footer class="fixed bottom-6 w-full text-center pointer-events-none">
+<div class="text-[10px] font-bold text-on-surface-variant/30 tracking-widest uppercase">
+            Kinetic Engine v2.0.4 // Grid Protocol Active
+        </div>
+</footer>
+</body></html>

@@ -19,46 +19,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _gameInvites = true;
   bool _rankUpdates = false;
 
-  void _showEditNameDialog(BuildContext context, SettingsState settings) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final controller = TextEditingController(text: settings.userName);
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: colorScheme.surfaceContainerHigh,
-        title: Text(
-          'Edit Name',
-          style: GoogleFonts.plusJakartaSans(color: colorScheme.onSurface, fontWeight: FontWeight.bold),
-        ),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          style: GoogleFonts.plusJakartaSans(color: colorScheme.onSurface),
-          decoration: InputDecoration(
-            hintText: 'Enter your name',
-            hintStyle: GoogleFonts.plusJakartaSans(color: colorScheme.onSurfaceVariant),
-            enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: settings.accentColor)),
-            focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: settings.accentColor, width: 2)),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('CANCEL', style: GoogleFonts.plusJakartaSans(color: colorScheme.onSurfaceVariant)),
-          ),
-          TextButton(
-            onPressed: () {
-              if (controller.text.isNotEmpty) {
-                settings.updateUserName(controller.text);
-              }
-              Navigator.pop(context);
-            },
-            child: Text('SAVE', style: GoogleFonts.plusJakartaSans(color: settings.accentColor, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -238,80 +198,71 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _buildAccountBento(SettingsState settings) {
     final colorScheme = Theme.of(context).colorScheme;
+    final authId = AuthService().currentUserId ?? 'Guest';
+    
     return Row(
       children: [
-        // User Profile Card
+        // Profile Info
         Expanded(
           flex: 2,
-          child: GestureDetector(
-            onTap: () => _showEditNameDialog(context, settings),
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerLow,
-                borderRadius: BorderRadius.circular(KRadius.md),
-                border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.05)),
-              ),
-              child: Row(
-                children: [
-                  Stack(
-                    children: [
-                      Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: colorScheme.surfaceBright,
-                        ),
-                        clipBehavior: Clip.antiAlias,
-                        child: settings.userName == 'Guest'
-                            ? Icon(Icons.person_rounded, color: settings.accentColor, size: 32)
-                            : Image.network(
-                                'https://api.dicebear.com/7.x/avataaars/png?seed=${settings.userName}',
-                                fit: BoxFit.cover,
-                              ),
+          child: Container(
+            height: 100,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(KRadius.md),
+              border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.05)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceBright,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Text(
+                      authId.substring(0, 1).toUpperCase(),
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: settings.accentColor,
                       ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: Container(
-                          width: 16,
-                          height: 16,
-                          decoration: BoxDecoration(
-                            color: colorScheme.tertiary,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: colorScheme.surface, width: 2),
-                          ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'LOGGED IN AS',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: colorScheme.onSurfaceVariant,
+                          letterSpacing: 1,
                         ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        authId,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: colorScheme.onSurface,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          settings.userName,
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
-                            color: colorScheme.onSurface,
-                          ),
-                        ),
-                        Text(
-                          settings.userRank,
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12,
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Icon(Icons.edit_rounded, color: settings.accentColor.withValues(alpha: 0.5), size: 18),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinetic_tictactoe/services/auth_service.dart';
+import 'package:kinetic_tictactoe/services/peer_service.dart';
 import 'package:kinetic_tictactoe/theme/app_theme.dart';
 
 class AuthScreen extends StatefulWidget {
@@ -32,6 +33,7 @@ class _AuthScreenState extends State<AuthScreen> {
         : await AuthService().register(_idController.text.trim(), _passwordController.text);
 
     if (success && mounted) {
+      PeerService().initPeer();
       context.go('/');
     }
   }

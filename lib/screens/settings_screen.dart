@@ -6,6 +6,8 @@ import 'package:kinetic_tictactoe/widgets/bottom_nav_bar.dart';
 import 'package:kinetic_tictactoe/state/settings_state.dart';
 import 'package:provider/provider.dart';
 
+import 'package:kinetic_tictactoe/services/auth_service.dart';
+
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
@@ -318,7 +320,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         Expanded(
           flex: 1,
           child: GestureDetector(
-            onTap: () => settings.logout(),
+            onTap: () async {
+              await AuthService().logout();
+              settings.logout(); // Keep settings reset
+              if (!mounted) return;
+              context.go('/auth');
+            },
             child: Container(
               height: 100,
               decoration: BoxDecoration(

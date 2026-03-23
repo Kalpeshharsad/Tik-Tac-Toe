@@ -5,10 +5,30 @@ import 'package:kinetic_tictactoe/screens/game_results_screen.dart';
 import 'package:kinetic_tictactoe/screens/multiplayer_lobby_screen.dart';
 import 'package:kinetic_tictactoe/screens/leaderboard_screen.dart';
 import 'package:kinetic_tictactoe/screens/settings_screen.dart';
+import 'package:kinetic_tictactoe/screens/auth_screen.dart';
+import 'package:kinetic_tictactoe/services/auth_service.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/',
+  refreshListenable: AuthService(),
+  redirect: (context, state) {
+    final isAuthenticated = AuthService().isAuthenticated;
+    final isAuthRoute = state.uri.path == '/auth';
+
+    if (!isAuthenticated && !isAuthRoute) {
+      return '/auth';
+    }
+    if (isAuthenticated && isAuthRoute) {
+      return '/';
+    }
+    return null;
+  },
   routes: [
+    GoRoute(
+      path: '/auth',
+      name: 'auth',
+      builder: (context, state) => const AuthScreen(),
+    ),
     GoRoute(
       path: '/',
       name: 'home',

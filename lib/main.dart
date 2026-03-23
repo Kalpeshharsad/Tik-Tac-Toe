@@ -6,9 +6,14 @@ import 'package:kinetic_tictactoe/state/game_state.dart';
 import 'package:kinetic_tictactoe/router/app_router.dart';
 
 import 'package:kinetic_tictactoe/state/settings_state.dart';
+import 'package:kinetic_tictactoe/services/auth_service.dart';
+import 'package:kinetic_tictactoe/services/peer_service.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await AuthService().init();
+  PeerService().initPeer();
 
   // Force portrait orientation
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);

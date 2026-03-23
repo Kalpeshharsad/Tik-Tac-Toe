@@ -6,8 +6,8 @@ import 'package:kinetic_tictactoe/theme/app_theme.dart';
 import 'package:kinetic_tictactoe/widgets/kinetic_app_bar.dart';
 import 'package:kinetic_tictactoe/widgets/bottom_nav_bar.dart';
 import 'package:kinetic_tictactoe/services/peer_service.dart';
+import 'package:kinetic_tictactoe/services/auth_service.dart';
 import 'package:provider/provider.dart';
-import 'package:kinetic_tictactoe/state/settings_state.dart';
 import 'package:kinetic_tictactoe/state/game_state.dart';
 
 class MultiplayerLobbyScreen extends StatefulWidget {
@@ -17,119 +17,93 @@ class MultiplayerLobbyScreen extends StatefulWidget {
   State<MultiplayerLobbyScreen> createState() => _MultiplayerLobbyScreenState();
 }
 
-class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen>
-    with SingleTickerProviderStateMixin {
-  final _codeCtrl = TextEditingController();
-  late AnimationController _pingCtrl;
+class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen> {
+  final _searchCtrl = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _pingCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1000),
-    );
-
-    // Initial sync
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _syncPeerState();
-    });
-  }
-
-  void _syncPeerState() {
-    final svc = PeerService();
-    if (svc.status == PeerStatus.hosting || svc.status == PeerStatus.connecting) {
-      _pingCtrl.repeat(reverse: true);
-    } else {
-      _pingCtrl.stop();
-    }
-  }
-
-  void _stopAll() {
-    PeerService().stopAll();
-    _pingCtrl.stop();
-    setState(() {});
-  }
-
-  void _startHosting() {
-    if (PeerService().status != PeerStatus.idle) {
-      _stopAll();
-      return;
-    }
-
-    final username = context.read<SettingsState>().userName;
-    final svc = PeerService();
+    // Ensure PeerService is initialized
+    PeerService().initPeer();
     
-    svc.onConnectionEstablished = () {
-      final gameState = context.read<GameState>();
-      // Host is always X
-      gameState.setupMultiplayer('X');
-      if (mounted) context.go('/play?vsAI=false');
-    };
-
-    svc.startHosting(username);
-    _syncPeerState();
-    setState(() {});
+    // Listen for connection establishment to transition to game
+    PeerService().onConnectionEstablished = _onConnectionEstablished;
   }
 
-  void _startJoining() {
-    final code = _codeCtrl.text.trim().toUpperCase();
-    if (code.length != 6) {
+  void _onConnectionEstablished() {
+    if (!mounted) return;
+    final svc = PeerService();
+    final gameState = context.read<GameState>();
+    
+    // Whoever sent the invite is X (Host), whoever accepted is O (Joiner)
+    // If I sent the invite, my incomingInviteFrom is null, so I am Host.
+    if (svc.outgoingInviteTo != null || svc.incomingInviteFrom == null) {
+      gameState.setupMultiplayer('X');
+    } else {
+      gameState.setupMultiplayer('O');
+    }
+    
+    context.go('/play?vsAI=false');
+  }
+
+  void _sendInvite() {
+    final targetId = _searchCtrl.text.trim();
+    if (targetId.isEmpty) return;
+    
+    // Prevent inviting self
+    if (targetId == AuthService().currentUserId) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid 6-character room code'), backgroundColor: KColors.error),
+        SnackBar(
+          content: Text('You cannot invite yourself.'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
       );
       return;
     }
 
-    if (PeerService().status != PeerStatus.idle) {
-      _stopAll();
-      return;
-    }
-
-    final username = context.read<SettingsState>().userName;
-    final svc = PeerService();
-
-    svc.onConnectionEstablished = () {
-      final gameState = context.read<GameState>();
-      // Joiner is always O
-      gameState.setupMultiplayer('O');
-      if (mounted) context.go('/play?vsAI=false');
-    };
-
-    svc.joinRoom(username, code);
-    _syncPeerState();
-    setState(() {});
+    PeerService().sendInvite(targetId);
   }
 
   @override
   void dispose() {
-    _pingCtrl.dispose();
-    _codeCtrl.dispose();
+    PeerService().onConnectionEstablished = null;
+    _searchCtrl.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // We listen to PeerService changes manually or use AnimatedBuilder
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
-      backgroundColor: KColors.surface,
+      backgroundColor: colorScheme.surface,
       appBar: const KineticAppBar(),
       body: AnimatedBuilder(
         animation: PeerService(),
         builder: (context, _) {
           final svc = PeerService();
+          final myId = AuthService().currentUserId ?? 'Guest';
+          
           return CustomScrollView(
             slivers: [
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
-                    _buildMatchmakingCard(svc),
-                    const SizedBox(height: 32),
-                    if (svc.status == PeerStatus.hosting)
-                      _buildHostView(svc)
-                    else if (svc.status == PeerStatus.idle || svc.status == PeerStatus.connecting)
-                      _buildJoinView(svc),
+                    
+                    // Incoming Invite Card
+                    if (svc.incomingInviteFrom != null)
+                      _buildIncomingInviteCard(svc, colorScheme),
+
+                    if (svc.incomingInviteFrom == null) ...[
+                      // My ID Display
+                      _buildMyIdCard(myId, colorScheme),
+                      const SizedBox(height: 32),
+                      
+                      // Search and Invite
+                      _buildSearchCard(svc, colorScheme),
+                    ]
+
                   ]),
                 ),
               ),
@@ -146,257 +120,220 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen>
     );
   }
 
-  Widget _buildMatchmakingButton({
-    required VoidCallback onTap,
-    required bool isActive,
-    required bool isOtherActive,
-    required IconData icon,
-    required String label,
-  }) {
-    final color = isActive ? KColors.error : (isOtherActive ? KColors.surfaceContainerHigh : KColors.primary);
-    final onColor = isActive ? Colors.white : (isOtherActive ? KColors.onSurfaceVariant : KColors.surfaceContainerHigh);
-
-    return GestureDetector(
-      onTap: isOtherActive ? null : onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(KRadius.md),
-          boxShadow: isActive ? [
-            BoxShadow(
-              color: color.withValues(alpha: 0.2),
-              blurRadius: 16,
-              spreadRadius: 1,
-            ),
-          ] : [],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(isActive ? Icons.cancel_rounded : icon, color: onColor, size: 20),
-            const SizedBox(width: 8),
-            Text(
-              isActive ? 'CANCEL MATCHMAKING' : label,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                color: onColor,
-                letterSpacing: 1,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMatchmakingCard(PeerService svc) {
-    final isHosting = svc.status == PeerStatus.hosting;
-    final isConnecting = svc.status == PeerStatus.connecting;
-
-    String titleText = 'Online\nMatchmaking';
-    if (isHosting) titleText = 'Host Mode\nWaiting...';
-    if (isConnecting) titleText = 'Join Mode\nConnecting...';
-
+  Widget _buildMyIdCard(String myId, ColorScheme colors) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: KColors.surfaceContainerLow,
+        color: colors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(KRadius.lg),
+        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.1)),
       ),
-      child: Stack(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Positioned(
-            top: -40, right: -40,
-            child: Container(
-              width: 160, height: 160,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: KColors.primary.withValues(alpha: 0.08),
-              ),
+          Text(
+            'YOUR KINETIC ID',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: colors.onSurfaceVariant,
+              letterSpacing: 2,
             ),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'MULTIPLAYER LOBBY',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: KColors.onSurfaceVariant,
-                  letterSpacing: 2,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                titleText,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  color: KColors.onSurface,
-                  height: 1.2,
-                  letterSpacing: -0.5,
-                ),
-              ),
-              const SizedBox(height: 12),
-              AnimatedBuilder(
-                animation: _pingCtrl,
-                builder: (_, __) => Row(
-                  children: [
-                    Container(
-                      width: 10, height: 10,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: (isHosting || isConnecting) ? KColors.primary : KColors.onSurfaceVariant.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      (isHosting || isConnecting) ? 'ACTIVE' : 'IDLE',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: (isHosting || isConnecting) ? KColors.primary : KColors.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildMatchmakingButton(
-                      onTap: _startHosting,
-                      isActive: isHosting,
-                      isOtherActive: isConnecting,
-                      icon: Icons.add_circle_outline_rounded,
-                      label: 'HOST GAME',
-                    ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            decoration: BoxDecoration(
+              color: colors.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(KRadius.md),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  myId,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
+                    color: colors.primary,
+                    letterSpacing: 1,
                   ),
-                ],
-              ),
-            ],
+                ),
+                IconButton(
+                  icon: Icon(Icons.copy_rounded, color: colors.onSurfaceVariant),
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: myId));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('ID copied to clipboard'), duration: const Duration(seconds: 2)),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Share this ID with friends so they can invite you.',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 12,
+              color: colors.onSurfaceVariant,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildHostView(PeerService svc) {
-    return Column(
-      children: [
-        Text(
-          'YOUR ROOM CODE',
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 10,
-            fontWeight: FontWeight.w700,
-            color: KColors.onSurfaceVariant,
-            letterSpacing: 2,
-          ),
-        ),
-        const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-          decoration: BoxDecoration(
-            color: KColors.surfaceContainerHigh,
-            borderRadius: BorderRadius.circular(KRadius.lg),
-            border: Border.all(color: KColors.primary.withValues(alpha: 0.3), width: 2),
-            boxShadow: [
-              BoxShadow(
-                color: KColors.primary.withValues(alpha: 0.1),
-                blurRadius: 20,
-                spreadRadius: 2,
-              )
-            ]
-          ),
-          child: Text(
-            svc.currentRoomCode ?? '------',
+  Widget _buildSearchCard(PeerService svc, ColorScheme colors) {
+    final isConnecting = svc.status == PeerStatus.connecting && svc.outgoingInviteTo != null;
+
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(KRadius.lg),
+        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'INVITE PLAYER',
             style: GoogleFonts.plusJakartaSans(
-              fontSize: 48,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 8,
-              color: KColors.onSurface,
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: colors.onSurfaceVariant,
+              letterSpacing: 2,
             ),
           ),
-        ),
-        const SizedBox(height: 16),
-        Text(
-          'Share this code with your opponent.',
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 14,
-            color: KColors.onSurfaceVariant,
+          const SizedBox(height: 16),
+          Container(
+            decoration: BoxDecoration(
+              color: colors.surfaceContainerHigh,
+              borderRadius: BorderRadius.circular(KRadius.md),
+            ),
+            child: TextField(
+              controller: _searchCtrl,
+              enabled: !isConnecting,
+              style: GoogleFonts.plusJakartaSans(color: colors.onSurface),
+              decoration: InputDecoration(
+                hintText: 'Enter Player ID',
+                hintStyle: TextStyle(color: colors.onSurfaceVariant.withValues(alpha: 0.4)),
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                suffixIcon: Icon(Icons.search_rounded, color: colors.onSurfaceVariant),
+              ),
+            ),
           ),
-        )
-      ],
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: isConnecting ? null : _sendInvite,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isConnecting ? colors.surfaceContainerHighest : colors.primary,
+                foregroundColor: isConnecting ? colors.onSurfaceVariant : colors.onPrimary,
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KRadius.md)),
+              ),
+              child: isConnecting 
+                  ? Text('WAITING FOR ${svc.outgoingInviteTo}...')
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.send_rounded, size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                          'SEND INVITE',
+                          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, letterSpacing: 1),
+                        ),
+                      ],
+                    ),
+            ),
+          ),
+          if (isConnecting) ...[
+            const SizedBox(height: 16),
+            Center(
+              child: TextButton(
+                onPressed: () => svc.stopAll(), // Cancel invite
+                child: Text('CANCEL', style: TextStyle(color: colors.error)),
+              ),
+            ),
+          ]
+        ],
+      ),
     );
   }
 
-  Widget _buildJoinView(PeerService svc) {
-    final isConnecting = svc.status == PeerStatus.connecting;
-    
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'JOIN A GAME',
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 10,
-            fontWeight: FontWeight.w700,
-            color: KColors.onSurfaceVariant,
-            letterSpacing: 2,
-          ),
-        ),
-        const SizedBox(height: 16),
-        Container(
-          decoration: BoxDecoration(
-            color: KColors.surfaceContainerHigh,
-            borderRadius: BorderRadius.circular(KRadius.md),
-            border: Border.all(
-              color: KColors.outlineVariant.withValues(alpha: 0.2),
-            )
-          ),
-          child: TextField(
-            controller: _codeCtrl,
-            enabled: !isConnecting,
-            textCapitalization: TextCapitalization.characters,
-            inputFormatters: [
-              LengthLimitingTextInputFormatter(6),
-              FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
-            ],
+  Widget _buildIncomingInviteCard(PeerService svc, ColorScheme colors) {
+    return Container(
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        color: colors.primaryContainer.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(KRadius.lg),
+        border: Border.all(color: colors.primary.withValues(alpha: 0.3), width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: colors.primary.withValues(alpha: 0.1),
+            blurRadius: 40,
+            spreadRadius: 10,
+          )
+        ]
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.sports_esports_rounded, color: colors.primary, size: 64),
+          const SizedBox(height: 24),
+          Text(
+            'INCOMING CHALLENGE',
             style: GoogleFonts.plusJakartaSans(
-              color: KColors.onSurface,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 8,
-            ),
-            textAlign: TextAlign.center,
-            decoration: InputDecoration(
-              hintText: 'ENTER CODE',
-              hintStyle: GoogleFonts.plusJakartaSans(
-                color: KColors.onSurfaceVariant.withValues(alpha: 0.3),
-                fontSize: 24,
-                letterSpacing: 4,
-              ),
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16, vertical: 24),
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: colors.primary,
+              letterSpacing: 3,
             ),
           ),
-        ),
-        const SizedBox(height: 16),
-        _buildMatchmakingButton(
-          onTap: _startJoining,
-          isActive: isConnecting,
-          isOtherActive: false,
-          icon: Icons.login_rounded,
-          label: 'JOIN GAME',
-        ),
-      ],
+          const SizedBox(height: 8),
+          Text(
+            svc.incomingInviteFrom ?? 'Unknown',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 32,
+              fontWeight: FontWeight.w900,
+              color: colors.onSurface,
+            ),
+          ),
+          const SizedBox(height: 32),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => svc.declineInvite(),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: colors.error,
+                    side: BorderSide(color: colors.error.withValues(alpha: 0.5)),
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KRadius.md)),
+                  ),
+                  child: Text('DECLINE', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800)),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => svc.acceptInvite(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colors.primary,
+                    foregroundColor: colors.onPrimary,
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KRadius.md)),
+                  ),
+                  child: Text('ACCEPT', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800)),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

@@ -39,6 +39,8 @@ class GameState extends ChangeNotifier {
   bool get isMultiplayer => _isMultiplayer;
   String? get mySign => _mySign;
   bool get isMyTurn => !_isMultiplayer || (_currentPlayer == _mySign);
+  bool get isMyWin => _winner != null && _winner != 'DRAW' && (_isMultiplayer ? _winner == _mySign : _winner == 'X');
+  bool get isMyLoss => _winner != null && _winner != 'DRAW' && (_isMultiplayer ? _winner != _mySign : _winner == 'O');
 
   // ── Win conditions ────────────────────────────────────────────────────────
   static const List<List<int>> _winLines = [

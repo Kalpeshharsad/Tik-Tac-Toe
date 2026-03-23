@@ -30,6 +30,14 @@ class SoundManager {
     }
   }
 
+  Future<void> playLoss() async {
+    try {
+      await _player.play(AssetSource('sounds/loosing.mp3'));
+    } catch (_) {
+      // Asset might be missing
+    }
+  }
+
   void dispose() {
     _player.dispose();
   }

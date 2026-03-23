@@ -105,8 +105,10 @@ class _GameBoardScreenState extends State<GameBoardScreen>
     if (settings.soundFxEnabled) {
       if (gs.isDraw) {
         SoundManager.instance.playDraw();
-      } else {
+      } else if (gs.isMyWin) {
         SoundManager.instance.playWin();
+      } else {
+        SoundManager.instance.playLoss();
       }
     }
     await _winCtrl.forward(from: 0);

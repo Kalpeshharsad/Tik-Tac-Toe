@@ -44,32 +44,41 @@ class _GameResultsScreenState extends State<GameResultsScreen>
     final gs = context.watch<GameState>();
     final colorScheme = Theme.of(context).colorScheme;
     final isDraw = gs.isDraw;
+    final isWin = gs.isMyWin;
     final winner = gs.winner;
-    final isXWin = winner == 'X';
-
-    final winColor = isXWin ? colorScheme.primary : colorScheme.secondary;
-    final winGradient = isXWin ? KGradients.primary(colorScheme) : KGradients.secondary(colorScheme);
+    
+    // Determine colors/gradients
+    final Color winColor;
+    final Gradient winGradient;
+    
+    if (isDraw) {
+      winColor = colorScheme.outline;
+      winGradient = LinearGradient(colors: [colorScheme.outline, colorScheme.outlineVariant]);
+    } else if (isWin) {
+      final isXWin = winner == 'X';
+      winColor = isXWin ? colorScheme.primary : colorScheme.secondary;
+      winGradient = isXWin ? KGradients.primary(colorScheme) : KGradients.secondary(colorScheme);
+    } else {
+      // Loss color (e.g., error Red or dark Surface)
+      winColor = colorScheme.error;
+      winGradient = LinearGradient(colors: [colorScheme.error, colorScheme.errorContainer]);
+    }
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
       body: Stack(
         children: [
-          // Radial celebration background
+          // Radial celebration/loss background
           Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
                 gradient: RadialGradient(
                   center: Alignment.topCenter,
                   radius: 1.2,
-                  colors: isDraw
-                      ? [
-                          colorScheme.outline.withValues(alpha: 0.15),
-                          colorScheme.surface,
-                        ]
-                      : [
-                          winColor.withValues(alpha: 0.15),
-                          colorScheme.surface,
-                        ],
+                  colors: [
+                    winColor.withValues(alpha: 0.15),
+                    colorScheme.surface,
+                  ],
                 ),
               ),
             ),
@@ -106,7 +115,7 @@ class _GameResultsScreenState extends State<GameResultsScreen>
                     child: Column(
                       children: [
                         const SizedBox(height: 16),
-                        // Trophy icon
+                        // Result Icon
                         FadeTransition(
                           opacity: _fadeAnim,
                           child: ScaleTransition(
@@ -138,13 +147,13 @@ class _GameResultsScreenState extends State<GameResultsScreen>
                                     child: Icon(
                                       isDraw
                                           ? Icons.handshake_outlined
-                                          : Icons.emoji_events_rounded,
+                                          : (isWin ? Icons.emoji_events_rounded : Icons.heart_broken_rounded),
                                       size: 56,
                                       color: winColor,
                                     ),
                                   ),
                                 ),
-                                if (!isDraw)
+                                if (isWin)
                                   Positioned(
                                     top: -8, right: -8,
                                     child: Transform.rotate(
@@ -178,7 +187,7 @@ class _GameResultsScreenState extends State<GameResultsScreen>
                         FadeTransition(
                           opacity: _fadeAnim,
                           child: Text(
-                            isDraw ? 'Draw!' : 'Winner!',
+                            isDraw ? 'Draw!' : (isWin ? 'Winner!' : 'You Lost!'),
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 60,
                               fontWeight: FontWeight.w900,
@@ -194,7 +203,9 @@ class _GameResultsScreenState extends State<GameResultsScreen>
                           child: Text(
                             isDraw
                                 ? 'A perfectly balanced match!'
-                                : 'You dominated the grid in record time.',
+                                : (isWin 
+                                    ? 'You dominated the grid in record time.'
+                                    : 'Better luck next time! Practice makes perfect.'),
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 15,
                               color: colorScheme.onSurfaceVariant,

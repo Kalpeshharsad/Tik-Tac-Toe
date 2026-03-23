@@ -35,7 +35,12 @@ class KineticBottomNavBar extends StatelessWidget {
           child: SafeArea(
             top: false,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              padding: EdgeInsets.fromLTRB(
+                16, 
+                12, 
+                16, 
+                8 + MediaQuery.of(context).padding.bottom * 0.5,
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [

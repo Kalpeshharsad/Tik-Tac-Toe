@@ -18,6 +18,7 @@ class _GameResultsScreenState extends State<GameResultsScreen>
   late AnimationController _ctrl;
   late Animation<double> _scaleAnim;
   late Animation<double> _fadeAnim;
+  bool _navigating = false;
 
   @override
   void initState() {
@@ -32,10 +33,27 @@ class _GameResultsScreenState extends State<GameResultsScreen>
     _fadeAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _ctrl, curve: Curves.easeIn),
     );
+  
+    // If opponent resets the board, navigate back to game automatically.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<GameState>().addListener(_onGameStateChanged);
+    });
+  }
+
+  void _onGameStateChanged() {
+    if (!mounted || _navigating) return;
+    final gs = context.read<GameState>();
+    // Opponent sent a restart while we are on the Results screen
+    if (!gs.gameOver && gs.isMultiplayer) {
+      _navigating = true;
+      context.go('/play?vsAI=false');
+    }
   }
 
   @override
   void dispose() {
+    try { context.read<GameState>().removeListener(_onGameStateChanged); } catch (_) {}
     _ctrl.dispose();
     super.dispose();
   }
@@ -43,15 +61,6 @@ class _GameResultsScreenState extends State<GameResultsScreen>
   @override
   Widget build(BuildContext context) {
     final gs = context.watch<GameState>();
-    
-    // Auto-navigate back to play if opponent reinstantiates the board
-    if (!gs.gameOver && gs.isMultiplayer) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) context.go('/play');
-      });
-      return const Scaffold();
-    }
-    
     final colorScheme = Theme.of(context).colorScheme;
     final isDraw = gs.isDraw;
     final isWin = gs.isMyWin;
@@ -306,8 +315,15 @@ class _GameResultsScreenState extends State<GameResultsScreen>
                           width: double.infinity,
                           child: GestureDetector(
                             onTap: () {
-                              gs.resetBoard();
-                              context.go('/play');
+                              if (_navigating) return;
+                              _navigating = true;
+                              if (gs.isMultiplayer) {
+                                gs.resetBoard(broadcast: true);
+                                context.go('/play?vsAI=false');
+                              } else {
+                                gs.resetBoard(broadcast: false);
+                                context.go('/play');
+                              }
                             },
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 20),

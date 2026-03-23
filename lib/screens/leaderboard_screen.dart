@@ -12,9 +12,8 @@ class LeaderboardScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: KColors.surface,
       bottomNavigationBar: KineticBottomNavBar(
-        currentIndex: 2, // Needs to be updated in the widget if we want to add more icons
+        currentIndex: 0,
         onTap: (i) {
-          if (i == 0) context.go('/');
           if (i == 1) context.go('/lobby');
           if (i == 2) context.go('/settings');
         },

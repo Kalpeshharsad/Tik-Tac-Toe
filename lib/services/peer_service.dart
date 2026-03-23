@@ -17,8 +17,9 @@ class PeerService extends ChangeNotifier {
   String? opponentUsername;
 
   // Invite System State
-  String? incomingInviteFrom;
+  Map<String, DataConnection> pendingInvites = {};
   String? outgoingInviteTo;
+  bool isHost = false;
 
   // Callbacks to notify game board
   void Function(Map<String, dynamic> data)? onDataReceived;
@@ -54,8 +55,8 @@ class PeerService extends ChangeNotifier {
       });
       
       conn.on("close").listen((dynamic _) {
-        if (incomingInviteFrom == conn.peer) {
-          incomingInviteFrom = null;
+        if (pendingInvites.values.contains(conn)) {
+          pendingInvites.removeWhere((key, value) => value == conn);
           notifyListeners();
         }
       });
@@ -83,9 +84,11 @@ class PeerService extends ChangeNotifier {
 
     // Is it an invite?
     if (payload['type'] == 'invite') {
-      incomingInviteFrom = payload['from'] as String?;
-      _connection = sourceConn; // Temporarily hold connection
-      notifyListeners();
+      final senderId = payload['from'] as String?;
+      if (senderId != null) {
+        pendingInvites[senderId] = sourceConn;
+        notifyListeners();
+      }
     } 
     // Is it an invite response?
     else if (payload['type'] == 'invite_response') {
@@ -117,6 +120,7 @@ class PeerService extends ChangeNotifier {
   void sendInvite(String targetUserId) {
     if (_peer == null) return;
     outgoingInviteTo = targetUserId;
+    isHost = true;
     status = PeerStatus.connecting;
     notifyListeners();
 
@@ -141,35 +145,38 @@ class PeerService extends ChangeNotifier {
     });
   }
 
-  void acceptInvite() {
-    if (_connection == null || incomingInviteFrom == null) return;
+  void acceptInvite(String senderId) {
+    if (!pendingInvites.containsKey(senderId)) return;
     
-    _connection!.send(jsonEncode({
+    final conn = pendingInvites[senderId]!;
+    conn.send(jsonEncode({
       "type": "invite_response", 
       "accepted": true
     }));
     
-    opponentUsername = incomingInviteFrom;
-    incomingInviteFrom = null;
+    isHost = false;
+    opponentUsername = senderId;
+    pendingInvites.clear();
     status = PeerStatus.connected;
+    _connection = conn;
     
-    _setupActiveConnectionListeners(_connection!);
+    _setupActiveConnectionListeners(conn);
     notifyListeners();
     
     if (onConnectionEstablished != null) onConnectionEstablished!();
   }
 
-  void declineInvite() {
-    if (_connection == null) return;
+  void declineInvite(String senderId) {
+    if (!pendingInvites.containsKey(senderId)) return;
+    final conn = pendingInvites[senderId]!;
     
-    _connection!.send(jsonEncode({
+    conn.send(jsonEncode({
       "type": "invite_response", 
       "accepted": false
     }));
     
-    _connection!.close();
-    _connection = null;
-    incomingInviteFrom = null;
+    conn.close();
+    pendingInvites.remove(senderId);
     notifyListeners();
   }
 
@@ -196,8 +203,9 @@ class PeerService extends ChangeNotifier {
   void _handleDisconnect() {
     status = PeerStatus.idle;
     opponentUsername = null;
-    incomingInviteFrom = null;
+    pendingInvites.clear();
     outgoingInviteTo = null;
+    isHost = false;
     _connection?.close();
     _connection = null;
     notifyListeners();

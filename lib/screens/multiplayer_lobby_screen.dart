@@ -35,9 +35,8 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen> {
     final svc = PeerService();
     final gameState = context.read<GameState>();
     
-    // Whoever sent the invite is X (Host), whoever accepted is O (Joiner)
-    // If I sent the invite, my incomingInviteFrom is null, so I am Host.
-    if (svc.outgoingInviteTo != null || svc.incomingInviteFrom == null) {
+    // If I am the host (I sent the invite), setup as X.
+    if (svc.isHost) {
       gameState.setupMultiplayer('X');
     } else {
       gameState.setupMultiplayer('O');
@@ -91,18 +90,17 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen> {
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
                     
-                    // Incoming Invite Card
-                    if (svc.incomingInviteFrom != null)
-                      _buildIncomingInviteCard(svc, colorScheme),
+                    // My ID Display
+                    _buildMyIdCard(myId, colorScheme),
+                    const SizedBox(height: 32),
+                    
+                    // Search and Invite
+                    _buildSearchCard(svc, colorScheme),
+                    const SizedBox(height: 32),
 
-                    if (svc.incomingInviteFrom == null) ...[
-                      // My ID Display
-                      _buildMyIdCard(myId, colorScheme),
-                      const SizedBox(height: 32),
-                      
-                      // Search and Invite
-                      _buildSearchCard(svc, colorScheme),
-                    ]
+                    // Pending Invites list
+                    if (svc.pendingInvites.isNotEmpty)
+                      _buildPendingInvitesList(svc, colorScheme),
 
                   ]),
                 ),
@@ -265,75 +263,76 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen> {
     );
   }
 
-  Widget _buildIncomingInviteCard(PeerService svc, ColorScheme colors) {
-    return Container(
-      padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
-        color: colors.primaryContainer.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(KRadius.lg),
-        border: Border.all(color: colors.primary.withValues(alpha: 0.3), width: 2),
-        boxShadow: [
-          BoxShadow(
-            color: colors.primary.withValues(alpha: 0.1),
-            blurRadius: 40,
-            spreadRadius: 10,
-          )
-        ]
-      ),
-      child: Column(
-        children: [
-          Icon(Icons.sports_esports_rounded, color: colors.primary, size: 64),
-          const SizedBox(height: 24),
-          Text(
-            'INCOMING CHALLENGE',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              color: colors.primary,
-              letterSpacing: 3,
+  Widget _buildPendingInvitesList(PeerService svc, ColorScheme colors) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'PENDING INVITES',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            color: colors.onSurfaceVariant,
+            letterSpacing: 2,
+          ),
+        ),
+        const SizedBox(height: 16),
+        ...svc.pendingInvites.keys.map((senderId) {
+          return Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: colors.primaryContainer.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(KRadius.md),
+              border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            svc.incomingInviteFrom ?? 'Unknown',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 32,
-              fontWeight: FontWeight.w900,
-              color: colors.onSurface,
+            child: Row(
+              children: [
+                Container(
+                  width: 40, height: 40,
+                  decoration: BoxDecoration(
+                    color: colors.primary.withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Text(
+                      senderId.substring(0, 1).toUpperCase(),
+                      style: GoogleFonts.plusJakartaSans(
+                        fontWeight: FontWeight.bold,
+                        color: colors.primary,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    senderId,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: colors.onSurface,
+                    ),
+                  ),
+                ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.close_rounded, color: colors.error),
+                      onPressed: () => svc.declineInvite(senderId),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.check_rounded, color: colors.primary),
+                      onPressed: () => svc.acceptInvite(senderId),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 32),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => svc.declineInvite(),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: colors.error,
-                    side: BorderSide(color: colors.error.withValues(alpha: 0.5)),
-                    padding: const EdgeInsets.symmetric(vertical: 20),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KRadius.md)),
-                  ),
-                  child: Text('DECLINE', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800)),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () => svc.acceptInvite(),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colors.primary,
-                    foregroundColor: colors.onPrimary,
-                    padding: const EdgeInsets.symmetric(vertical: 20),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KRadius.md)),
-                  ),
-                  child: Text('ACCEPT', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800)),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+          );
+        }).toList(),
+      ],
     );
   }
 }

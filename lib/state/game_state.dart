@@ -87,14 +87,26 @@ class GameState extends ChangeNotifier {
     peerService.onDataReceived = (data) {
       if (data['type'] == 'move') {
         final index = data['index'] as int;
-        // In GameState we can't easily access SettingsState directly without passing it,
-        // but for basic move sync we can default haptics to true or false.
         makeMove(index, isRemote: true);
-        
-        // Note: Sound normally playing in UI, but if GameState is the source of truth,
-        // we might want a way to notify UI to play sound.
+      } else if (data['type'] == 'restart') {
+        resetBoard(isRemote: true);
       }
     };
+    
+    peerService.onConnectionLost = () {
+      if (_isMultiplayer && !_gameOver && _hasStartedMatch()) {
+        _winner = _mySign; // Win by forfeit
+        _gameOver = true;
+        notifyListeners();
+      } else {
+        disableMultiplayer();
+        notifyListeners();
+      }
+    };
+  }
+
+  bool _hasStartedMatch() {
+    return _moveCount > 0;
   }
 
   void disableMultiplayer() {
@@ -130,7 +142,7 @@ class GameState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void resetBoard() {
+  void resetBoard({bool isRemote = false}) {
     _board = List.filled(boardSize, null);
     _currentPlayer = 'X';
     _winner = null;
@@ -138,6 +150,10 @@ class GameState extends ChangeNotifier {
     _gameOver = false;
     _moveCount = 0;
     _elapsedSeconds = 0;
+    
+    if (_isMultiplayer && !isRemote) {
+      PeerService().sendMessage({'type': 'restart'});
+    }
     notifyListeners();
   }
 

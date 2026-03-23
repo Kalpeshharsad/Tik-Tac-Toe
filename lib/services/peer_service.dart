@@ -217,4 +217,11 @@ class PeerService extends ChangeNotifier {
     _peer?.dispose();
     _peer = null;
   }
+
+  void endMatch() {
+    if (_connection != null) {
+      _connection!.close();
+    }
+    _handleDisconnect();
+  }
 }

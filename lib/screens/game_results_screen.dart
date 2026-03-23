@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinetic_tictactoe/theme/app_theme.dart';
 import 'package:kinetic_tictactoe/state/game_state.dart';
+import 'package:kinetic_tictactoe/services/peer_service.dart';
 
 class GameResultsScreen extends StatefulWidget {
   const GameResultsScreen({super.key});
@@ -42,6 +43,15 @@ class _GameResultsScreenState extends State<GameResultsScreen>
   @override
   Widget build(BuildContext context) {
     final gs = context.watch<GameState>();
+    
+    // Auto-navigate back to play if opponent reinstantiates the board
+    if (!gs.gameOver && gs.isMultiplayer) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) context.go('/play');
+      });
+      return const Scaffold();
+    }
+    
     final colorScheme = Theme.of(context).colorScheme;
     final isDraw = gs.isDraw;
     final isWin = gs.isMyWin;
@@ -329,6 +339,10 @@ class _GameResultsScreenState extends State<GameResultsScreen>
                           width: double.infinity,
                           child: GestureDetector(
                             onTap: () {
+                              if (gs.isMultiplayer) {
+                                PeerService().endMatch();
+                                gs.disableMultiplayer();
+                              }
                               gs.resetAll();
                               context.go('/');
                             },

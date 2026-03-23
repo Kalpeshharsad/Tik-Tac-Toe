@@ -510,7 +510,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
         Expanded(
           child: GestureDetector(
             onTap: () {
-              PeerService().stopAll();
+              PeerService().endMatch();
               gs.disableMultiplayer();
               gs.resetAll();
               context.go('/');

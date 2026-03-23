@@ -15,7 +15,7 @@ class LeaderboardScreen extends StatelessWidget {
         currentIndex: 2, // Needs to be updated in the widget if we want to add more icons
         onTap: (i) {
           if (i == 0) context.go('/');
-          if (i == 1) context.go('/play');
+          if (i == 1) context.go('/lobby');
           if (i == 2) context.go('/settings');
         },
       ),

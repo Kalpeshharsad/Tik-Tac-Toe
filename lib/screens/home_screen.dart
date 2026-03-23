@@ -41,7 +41,7 @@ class HomeScreen extends StatelessWidget {
       bottomNavigationBar: KineticBottomNavBar(
         currentIndex: 0,
         onTap: (i) {
-          if (i == 1) context.go('/play');
+          if (i == 1) context.go('/lobby');
           if (i == 2) context.go('/settings');
         },
       ),

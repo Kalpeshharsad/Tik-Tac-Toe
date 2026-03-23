@@ -143,8 +143,17 @@ class _GameBoardScreenState extends State<GameBoardScreen>
       bottomNavigationBar: KineticBottomNavBar(
         currentIndex: 1,
         onTap: (i) {
-          if (i == 0) context.go('/');
-          if (i == 1) context.go('/lobby');
+          if (i != 1) {
+             if (gs.isMultiplayer) {
+               PeerService().endMatch();
+               gs.disableMultiplayer();
+             }
+             gs.resetAll();
+             if (i == 0) context.go('/');
+             if (i == 2) context.go('/settings');
+          } else {
+             context.go('/lobby');
+          }
         },
       ),
     );

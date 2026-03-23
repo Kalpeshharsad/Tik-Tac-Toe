@@ -31,8 +31,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         currentIndex: 2,
         onTap: (i) {
           if (i == 0) context.go('/');
-          if (i == 1) context.go('/play');
-          if (i == 2) context.go('/settings');
+          if (i == 1) context.go('/lobby');
         },
       ),
       body: Column(

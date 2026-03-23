@@ -113,6 +113,7 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen> {
         currentIndex: 1,
         onTap: (i) {
           if (i == 0) context.go('/');
+          if (i == 2) context.go('/settings');
         },
       ),
     );

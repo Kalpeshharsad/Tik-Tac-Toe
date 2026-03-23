@@ -15,11 +15,10 @@ class GameState extends ChangeNotifier {
   int _drawCount = 0;
   int _moveCount = 0;
   bool _gameOver = false;
-  
+
   // Multiplayer
   bool _isMultiplayer = false;
   String? _mySign; // 'X' or 'O'
-  void Function(int index)? onMoveMade; // Callback to send move over P2P
 
   // Timer
   int _elapsedSeconds = 0;
@@ -52,7 +51,7 @@ class GameState extends ChangeNotifier {
   // ── Actions ───────────────────────────────────────────────────────────────
   bool makeMove(int index, {bool hapticsEnabled = true, bool isRemote = false}) {
     if (_board[index] != null || _gameOver) return false;
-    
+
     // In multiplayer, only allow local player to move on their turn
     if (_isMultiplayer && !isRemote && _currentPlayer != _mySign) return false;
 
@@ -62,7 +61,7 @@ class GameState extends ChangeNotifier {
       HapticFeedback.lightImpact();
     }
     _checkResult();
-    
+
     // Notify multiplayer service if this was a local move
     if (_isMultiplayer && !isRemote) {
       PeerService().sendMessage({'type': 'move', 'index': index});
@@ -79,40 +78,57 @@ class GameState extends ChangeNotifier {
     _isMultiplayer = true;
     _mySign = mySign;
     _setupPeerListeners();
-    resetAll();
+    // Reset only the board, NOT scores — keep them across rounds if desired
+    _board = List.filled(boardSize, null);
+    _currentPlayer = 'X';
+    _winner = null;
+    _winningLine = null;
+    _gameOver = false;
+    _moveCount = 0;
+    _elapsedSeconds = 0;
+    notifyListeners();
   }
 
   void _setupPeerListeners() {
     final peerService = PeerService();
+
     peerService.onDataReceived = (data) {
       if (data['type'] == 'move') {
         final index = data['index'] as int;
         makeMove(index, isRemote: true);
       } else if (data['type'] == 'restart') {
-        resetBoard(isRemote: true);
+        // Opponent wants to restart — reset board only
+        _board = List.filled(boardSize, null);
+        _currentPlayer = 'X';
+        _winner = null;
+        _winningLine = null;
+        _gameOver = false;
+        _moveCount = 0;
+        _elapsedSeconds = 0;
+        notifyListeners();
       }
     };
-    
+
     peerService.onConnectionLost = () {
-      if (_isMultiplayer && !_gameOver && _hasStartedMatch()) {
-        _winner = _mySign; // Win by forfeit
+      if (_isMultiplayer && !_gameOver && _moveCount > 0) {
+        // Opponent disconnected mid-game — win by forfeit
+        _winner = _mySign;
         _gameOver = true;
         notifyListeners();
       } else {
-        disableMultiplayer();
+        // Pre-game disconnect — just go back to idle
+        _isMultiplayer = false;
+        _mySign = null;
         notifyListeners();
       }
     };
-  }
-
-  bool _hasStartedMatch() {
-    return _moveCount > 0;
   }
 
   void disableMultiplayer() {
     _isMultiplayer = false;
     _mySign = null;
     PeerService().onDataReceived = null;
+    PeerService().onConnectionLost = null;
   }
 
   void _checkResult() {
@@ -142,7 +158,8 @@ class GameState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void resetBoard({bool isRemote = false}) {
+  /// Reset only the board for a new round (optionally broadcast to peer)
+  void resetBoard({bool broadcast = true}) {
     _board = List.filled(boardSize, null);
     _currentPlayer = 'X';
     _winner = null;
@@ -150,18 +167,28 @@ class GameState extends ChangeNotifier {
     _gameOver = false;
     _moveCount = 0;
     _elapsedSeconds = 0;
-    
-    if (_isMultiplayer && !isRemote) {
+
+    if (_isMultiplayer && broadcast) {
       PeerService().sendMessage({'type': 'restart'});
     }
     notifyListeners();
   }
 
+  /// Reset everything for a fresh session (never broadcasts — caller should
+  /// call endMatch first to cleanly close the connection)
   void resetAll() {
     _xScore = 0;
     _oScore = 0;
     _drawCount = 0;
-    resetBoard();
+    // Reset board without broadcasting — connection is being torn down
+    _board = List.filled(boardSize, null);
+    _currentPlayer = 'X';
+    _winner = null;
+    _winningLine = null;
+    _gameOver = false;
+    _moveCount = 0;
+    _elapsedSeconds = 0;
+    notifyListeners();
   }
 
   String get formattedTime {

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:peerdart/peerdart.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:kinetic_tictactoe/services/auth_service.dart';
 
 enum PeerStatus { idle, connecting, connected }
@@ -21,6 +22,9 @@ class PeerService extends ChangeNotifier {
   String? outgoingInviteTo;
   bool isHost = false;
 
+  // Saved contacts (persisted)
+  List<String> savedContacts = [];
+
   // Callbacks to notify game board
   void Function(Map<String, dynamic> data)? onDataReceived;
   void Function()? onConnectionEstablished;
@@ -28,7 +32,32 @@ class PeerService extends ChangeNotifier {
 
   String get myPeerId => 'kinetic_${AuthService().currentUserId}';
 
-  // Initialize peer on app start or login
+  // ── Contacts Persistence ──────────────────────────────────────────────────
+
+  Future<void> loadContacts() async {
+    final prefs = await SharedPreferences.getInstance();
+    savedContacts = prefs.getStringList('saved_contacts') ?? [];
+    notifyListeners();
+  }
+
+  Future<void> _saveContact(String userId) async {
+    if (!savedContacts.contains(userId)) {
+      savedContacts.add(userId);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList('saved_contacts', savedContacts);
+      notifyListeners();
+    }
+  }
+
+  Future<void> removeContact(String userId) async {
+    savedContacts.remove(userId);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('saved_contacts', savedContacts);
+    notifyListeners();
+  }
+
+  // ── Init ──────────────────────────────────────────────────────────────────
+
   void initPeer() {
     if (_peer != null) return;
     if (AuthService().currentUserId == null) return;
@@ -39,83 +68,84 @@ class PeerService extends ChangeNotifier {
       debugPrint('PeerJS Open: $id');
     });
 
-    // Handle incoming connections (Invites)
+    // Handle incoming connections (invites from other players)
     _peer!.on("connection").listen((dynamic event) {
-      // If we are already in a match, ignore
+      // If already in a match, ignore new connections
       if (status == PeerStatus.connected) return;
 
       final conn = event as DataConnection;
-      
-      conn.on("open").listen((dynamic _) {
-        // Wait for them to send the 'invite' payload
+
+      // Single data listener per incoming connection
+      conn.on("data").listen((dynamic data) {
+        _handleIncomingData(data, conn);
       });
 
-      conn.on("data").listen((dynamic data) {
-        _handleIncomingDataSafely(data, conn);
-      });
-      
       conn.on("close").listen((dynamic _) {
-        if (pendingInvites.values.contains(conn)) {
-          pendingInvites.removeWhere((key, value) => value == conn);
-          notifyListeners();
-        }
+        // Remove from pending if it was a pending invite
+        pendingInvites.removeWhere((key, value) => value == conn);
+        notifyListeners();
       });
     });
 
     _peer!.on("error").listen((dynamic err) {
       debugPrint('PeerJS Error: $err');
-      _handleDisconnect();
+      _triggerDisconnect();
     });
+
+    // Load saved contacts
+    loadContacts();
   }
 
-  void _handleIncomingDataSafely(dynamic data, DataConnection sourceConn) {
+  // ── Data Handling ─────────────────────────────────────────────────────────
+
+  void _handleIncomingData(dynamic raw, DataConnection sourceConn) {
     Map<String, dynamic> payload;
     try {
-      if (data is String) {
-        payload = jsonDecode(data) as Map<String, dynamic>;
-      } else if (data is Map) {
-        payload = Map<String, dynamic>.from(data);
+      if (raw is String) {
+        payload = jsonDecode(raw) as Map<String, dynamic>;
+      } else if (raw is Map) {
+        payload = Map<String, dynamic>.from(raw);
       } else {
         return;
       }
     } catch (e) {
+      debugPrint('PeerJS data parse error: $e');
       return;
     }
 
-    // Is it an invite?
-    if (payload['type'] == 'invite') {
+    final type = payload['type'] as String?;
+
+    if (type == 'invite') {
+      // Incoming invite: store in pending
       final senderId = payload['from'] as String?;
-      if (senderId != null) {
+      if (senderId != null && status != PeerStatus.connected) {
         pendingInvites[senderId] = sourceConn;
         notifyListeners();
       }
-    } 
-    // Is it an invite response?
-    else if (payload['type'] == 'invite_response') {
+    } else if (type == 'invite_response') {
+      // Our invite was accepted or declined
       final accepted = payload['accepted'] == true;
       if (accepted) {
         opponentUsername = outgoingInviteTo;
+        _saveContact(outgoingInviteTo!);
         outgoingInviteTo = null;
         status = PeerStatus.connected;
-        _setupActiveConnectionListeners(_connection!);
         notifyListeners();
         if (onConnectionEstablished != null) onConnectionEstablished!();
       } else {
-        // Declined
         outgoingInviteTo = null;
         _connection?.close();
         _connection = null;
         status = PeerStatus.idle;
         notifyListeners();
       }
-    }
-    // Is it game data during an active match?
-    else if (status == PeerStatus.connected) {
+    } else if (status == PeerStatus.connected) {
+      // Active match data — route to GameState
       if (onDataReceived != null) onDataReceived!(payload);
     }
   }
 
-  // --- Invite Actions ---
+  // ── Invite Actions ────────────────────────────────────────────────────────
 
   void sendInvite(String targetUserId) {
     if (_peer == null) return;
@@ -125,7 +155,7 @@ class PeerService extends ChangeNotifier {
     notifyListeners();
 
     _connection = _peer!.connect('kinetic_$targetUserId');
-    
+
     _connection!.on("open").listen((dynamic _) {
       _connection!.send(jsonEncode({
         "type": "invite",
@@ -133,95 +163,111 @@ class PeerService extends ChangeNotifier {
       }));
     });
 
+    // Single data listener on outgoing connection
     _connection!.on("data").listen((dynamic data) {
-      _handleIncomingDataSafely(data, _connection!);
+      _handleIncomingData(data, _connection!);
     });
 
     _connection!.on("close").listen((dynamic _) {
-       _handleDisconnect();
+      if (status != PeerStatus.idle) _triggerDisconnect();
     });
+
     _connection!.on("error").listen((dynamic _) {
-       _handleDisconnect();
+      if (status != PeerStatus.idle) _triggerDisconnect();
     });
   }
 
   void acceptInvite(String senderId) {
     if (!pendingInvites.containsKey(senderId)) return;
-    
+
     final conn = pendingInvites[senderId]!;
+
     conn.send(jsonEncode({
-      "type": "invite_response", 
-      "accepted": true
+      "type": "invite_response",
+      "accepted": true,
     }));
-    
+
     isHost = false;
     opponentUsername = senderId;
+    _saveContact(senderId);
+
+    // Close all other pending invites
+    for (final entry in pendingInvites.entries) {
+      if (entry.key != senderId) {
+        entry.value.send(jsonEncode({"type": "invite_response", "accepted": false}));
+        entry.value.close();
+      }
+    }
     pendingInvites.clear();
+
     status = PeerStatus.connected;
     _connection = conn;
-    
-    _setupActiveConnectionListeners(conn);
+
+    // Add disconnect listener to the accepted connection
+    conn.on("close").listen((dynamic _) {
+      if (status != PeerStatus.idle) _triggerDisconnect();
+    });
+    conn.on("error").listen((dynamic _) {
+      if (status != PeerStatus.idle) _triggerDisconnect();
+    });
+
     notifyListeners();
-    
     if (onConnectionEstablished != null) onConnectionEstablished!();
   }
 
   void declineInvite(String senderId) {
     if (!pendingInvites.containsKey(senderId)) return;
     final conn = pendingInvites[senderId]!;
-    
-    conn.send(jsonEncode({
-      "type": "invite_response", 
-      "accepted": false
-    }));
-    
+    conn.send(jsonEncode({"type": "invite_response", "accepted": false}));
     conn.close();
     pendingInvites.remove(senderId);
     notifyListeners();
   }
 
-  // --- Active Match Data ---
-
-  void _setupActiveConnectionListeners(DataConnection conn) {
-    // Override general listeners with active match listeners if needed, 
-    // but we already mapped incoming data to onDataReceived in _handleIncomingDataSafely
-    
-    conn.on("close").listen((dynamic _) {
-      _handleDisconnect();
-    });
-    conn.on("error").listen((dynamic _) {
-      _handleDisconnect();
-    });
-  }
+  // ── Active Match ──────────────────────────────────────────────────────────
 
   void sendMessage(Map<String, dynamic> payload) {
     if (_connection != null && status == PeerStatus.connected) {
-      _connection!.send(jsonEncode(payload));
+      try {
+        _connection!.send(jsonEncode(payload));
+      } catch (e) {
+        debugPrint('PeerJS sendMessage error: $e');
+      }
     }
   }
 
-  void _handleDisconnect() {
+  void _triggerDisconnect() {
+    if (status == PeerStatus.idle) return; // Already disconnected, don't fire twice
     status = PeerStatus.idle;
     opponentUsername = null;
     pendingInvites.clear();
     outgoingInviteTo = null;
     isHost = false;
-    _connection?.close();
     _connection = null;
     notifyListeners();
     if (onConnectionLost != null) onConnectionLost!();
   }
 
-  void stopAll() {
-    _handleDisconnect();
-    _peer?.dispose();
-    _peer = null;
+  /// End only the active match — keep peer alive for future invites
+  void endMatch() {
+    final wasConnected = status == PeerStatus.connected;
+    if (wasConnected && _connection != null) {
+      try { _connection!.close(); } catch (_) {}
+    }
+    status = PeerStatus.idle;
+    opponentUsername = null;
+    pendingInvites.clear();
+    outgoingInviteTo = null;
+    isHost = false;
+    _connection = null;
+    // Do NOT fire onConnectionLost here — caller is intentionally ending
+    notifyListeners();
   }
 
-  void endMatch() {
-    if (_connection != null) {
-      _connection!.close();
-    }
-    _handleDisconnect();
+  /// Full teardown — destroys peer socket
+  void stopAll() {
+    endMatch();
+    _peer?.dispose();
+    _peer = null;
   }
 }

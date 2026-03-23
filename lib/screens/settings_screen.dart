@@ -80,7 +80,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   // Account Section
                   _buildSectionHeader('Account', 'PROFILE MANAGEMENT'),
                   const SizedBox(height: 12),
-                  _buildAccountBento(settings),
+                  ListenableBuilder(
+                    listenable: AuthService(),
+                    builder: (context, _) => _buildAccountBento(settings),
+                  ),
 
                   const SizedBox(height: 32),
 

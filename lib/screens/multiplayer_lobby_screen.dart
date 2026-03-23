@@ -99,8 +99,14 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen> {
                     const SizedBox(height: 32),
 
                     // Pending Invites list
-                    if (svc.pendingInvites.isNotEmpty)
+                    if (svc.pendingInvites.isNotEmpty) ...[
                       _buildPendingInvitesList(svc, colorScheme),
+                      const SizedBox(height: 32),
+                    ],
+
+                    // Saved Contacts
+                    if (svc.savedContacts.isNotEmpty)
+                      _buildSavedContacts(svc, colorScheme),
 
                   ]),
                 ),
@@ -335,5 +341,93 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen> {
         }).toList(),
       ],
     );
+  }  // end _buildPendingInvitesList
+
+  Widget _buildSavedContacts(PeerService svc, ColorScheme colors) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'SAVED CONTACTS',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            color: colors.onSurfaceVariant,
+            letterSpacing: 2,
+          ),
+        ),
+        const SizedBox(height: 16),
+        ...svc.savedContacts.map((contactId) {
+          return Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: colors.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(KRadius.md),
+              border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.15)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 40, height: 40,
+                  decoration: BoxDecoration(
+                    color: colors.secondary.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Text(
+                      contactId.substring(0, 1).toUpperCase(),
+                      style: GoogleFonts.plusJakartaSans(
+                        fontWeight: FontWeight.bold,
+                        color: colors.secondary,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    contactId,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: colors.onSurface,
+                    ),
+                  ),
+                ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.delete_outline_rounded, color: colors.error, size: 20),
+                      onPressed: () => svc.removeContact(contactId),
+                      tooltip: 'Remove',
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: svc.status == PeerStatus.idle
+                          ? () {
+                              _searchCtrl.text = contactId;
+                              _sendInvite();
+                            }
+                          : null,
+                      icon: const Icon(Icons.sports_esports_rounded, size: 16),
+                      label: const Text('Invite'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: colors.primary,
+                        foregroundColor: colors.onPrimary,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        textStyle: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KRadius.md)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+        }),
+      ],
+    );
   }
 }
+

@@ -32,6 +32,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
   late Animation<double> _winProgress;
 
   final AiPlayer _ai = const AiPlayer(aiMark: 'O', humanMark: 'X');
+  bool _navigating = false; // prevents double navigation to /results
 
   @override
   void initState() {
@@ -47,7 +48,18 @@ class _GameBoardScreenState extends State<GameBoardScreen>
     // Start timer
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _startTimer();
+      // Listen for remote/AI game-over to trigger navigation
+      context.read<GameState>().addListener(_onGameStateChanged);
     });
+  }
+
+  void _onGameStateChanged() {
+    if (!mounted || _navigating) return;
+    final gs = context.read<GameState>();
+    if (gs.gameOver) {
+      final settings = context.read<SettingsState>();
+      _onGameOver(gs, settings);
+    }
   }
 
   void _startTimer() {
@@ -63,6 +75,8 @@ class _GameBoardScreenState extends State<GameBoardScreen>
     _timer?.cancel();
     _aiTimer?.cancel();
     _winCtrl.dispose();
+    // Safe removal — GameState might already be disposed
+    try { context.read<GameState>().removeListener(_onGameStateChanged); } catch (_) {}
     super.dispose();
   }
 
@@ -102,6 +116,8 @@ class _GameBoardScreenState extends State<GameBoardScreen>
   }
 
   void _onGameOver(GameState gs, SettingsState settings) async {
+    if (_navigating) return;
+    _navigating = true;
     if (settings.soundFxEnabled) {
       if (gs.isDraw) {
         SoundManager.instance.playDraw();
@@ -347,7 +363,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
       children: [
         GestureDetector(
           onTap: () {
-            gs.resetBoard();
+            gs.resetBoard(broadcast: true);
             _winCtrl.reset();
             _startTimer();
           },
@@ -478,7 +494,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
         Expanded(
           child: GestureDetector(
             onTap: () {
-              gs.resetBoard();
+              gs.resetBoard(broadcast: true);
               _winCtrl.reset();
               _startTimer();
             },

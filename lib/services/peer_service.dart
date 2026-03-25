@@ -111,7 +111,7 @@ class PeerService extends ChangeNotifier {
           final str = utf8.decode(raw.cast<int>());
           payload = jsonDecode(str) as Map<String, dynamic>;
         } catch (e) {
-          debugPrint('PeerJS binary decode error: $e');
+          debugPrint('PeerJS binary decode error: $e, raw: $raw');
           return;
         }
       } else {
@@ -166,24 +166,32 @@ class PeerService extends ChangeNotifier {
     _connection = _peer!.connect('kinetic_$targetUserId');
 
     _connection!.on("open").listen((dynamic _) {
+      debugPrint('PeerService: connection opened');
       _connection!.send(jsonEncode({
         "type": "invite",
         "from": AuthService().currentUserId,
       }));
     });
 
-    // Single data listener on outgoing connection
-    _connection!.on("data").listen((dynamic data) {
-      _handleIncomingData(data, _connection!);
-    });
+    // Store reference to connection before attaching listener
+    final conn = _connection;
+    if (conn != null) {
+      // Single data listener on outgoing connection
+      conn.on("data").listen((dynamic data) {
+        debugPrint('PeerService: data received on invite connection: $data');
+        _handleIncomingData(data, conn);
+      });
 
-    _connection!.on("close").listen((dynamic _) {
-      if (status != PeerStatus.idle) _triggerDisconnect();
-    });
+      conn.on("close").listen((dynamic _) {
+        debugPrint('PeerService: connection closed');
+        if (status != PeerStatus.idle) _triggerDisconnect();
+      });
 
-    _connection!.on("error").listen((dynamic _) {
-      if (status != PeerStatus.idle) _triggerDisconnect();
-    });
+      conn.on("error").listen((dynamic _) {
+        debugPrint('PeerService: connection error');
+        if (status != PeerStatus.idle) _triggerDisconnect();
+      });
+    }
   }
 
   void acceptInvite(String senderId) {
@@ -242,6 +250,8 @@ class PeerService extends ChangeNotifier {
       } catch (e) {
         debugPrint('PeerJS sendMessage error: $e');
       }
+    } else {
+      debugPrint('PeerJS sendMessage: skipped - connection=${_connection != null}, status=$status');
     }
   }
 

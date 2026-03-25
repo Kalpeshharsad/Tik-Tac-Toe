@@ -48,7 +48,11 @@ class GameState extends ChangeNotifier {
   bool get isDraw => _winner == 'DRAW';
   bool get isMultiplayer => _isMultiplayer;
   String? get mySign => _mySign;
-  bool get isMyTurn => !_isMultiplayer || (_currentPlayer == _mySign);
+  bool get isMyTurn {
+    final result = !_isMultiplayer || (_currentPlayer == _mySign);
+    debugPrint('isMyTurn getter: _isMultiplayer=$_isMultiplayer, _currentPlayer=$_currentPlayer, _mySign=$_mySign, result=$result');
+    return result;
+  }
   bool get isMyWin => _winner != null && _winner != 'DRAW' && (_isMultiplayer ? _winner == _mySign : _winner == 'X');
   bool get isMyLoss => _winner != null && _winner != 'DRAW' && (_isMultiplayer ? _winner != _mySign : _winner == 'O');
 
@@ -61,10 +65,17 @@ class GameState extends ChangeNotifier {
 
   // ── Actions ───────────────────────────────────────────────────────────────
   bool makeMove(int index, {bool hapticsEnabled = true, bool isRemote = false}) {
-    if (_board[index] != null || _gameOver) return false;
+    debugPrint('makeMove: index=$index, isRemote=$isRemote, _board[index]=${_board[index]}, _gameOver=$_gameOver, _isMultiplayer=$_isMultiplayer, isMyTurn=$isMyTurn');
+    if (_board[index] != null || _gameOver) {
+      debugPrint('makeMove: rejected - cell occupied or game over');
+      return false;
+    }
 
     // In multiplayer, only allow local player to move on their turn
-    if (_isMultiplayer && !isRemote && _currentPlayer != _mySign) return false;
+    if (_isMultiplayer && !isRemote && _currentPlayer != _mySign) {
+      debugPrint('makeMove: rejected - not your turn. _currentPlayer=$_currentPlayer, _mySign=$_mySign');
+      return false;
+    }
 
     _board[index] = _currentPlayer;
     _moveCount++;
@@ -86,8 +97,10 @@ class GameState extends ChangeNotifier {
   }
 
   void setupMultiplayer(String mySign) {
+    debugPrint('setupMultiplayer called with mySign=$mySign');
     _isMultiplayer = true;
     _mySign = mySign;
+    debugPrint('setupMultiplayer: _mySign is now $_mySign');
     _setupPeerListeners();
     // Reset only the board, NOT scores — keep them across rounds if desired
     _board = List.filled(boardSize, null);
@@ -104,9 +117,12 @@ class GameState extends ChangeNotifier {
     final peerService = PeerService();
 
     peerService.onDataReceived = (data) {
+      debugPrint('GameState: onDataReceived called, type=${data['type']}, _mySign=$_mySign, _currentPlayer=$_currentPlayer');
       if (data['type'] == 'move') {
         final index = data['index'] as int;
+        debugPrint('GameState: processing remote move at index $index');
         makeMove(index, isRemote: true);
+        debugPrint('GameState: after remote move, _currentPlayer=$_currentPlayer, _mySign=$_mySign, isMyTurn=$isMyTurn');
       } else if (data['type'] == 'restart') {
         // Opponent wants to restart — reset board only
         _board = List.filled(boardSize, null);

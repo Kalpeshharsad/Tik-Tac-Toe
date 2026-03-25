@@ -163,35 +163,35 @@ class PeerService extends ChangeNotifier {
     status = PeerStatus.connecting;
     notifyListeners();
 
-    _connection = _peer!.connect('kinetic_$targetUserId');
+    final newConnection = _peer!.connect('kinetic_$targetUserId');
 
-    _connection!.on("open").listen((dynamic _) {
-      debugPrint('PeerService: connection opened');
-      _connection!.send(jsonEncode({
+    // Capture connection reference BEFORE setting listeners
+    newConnection.on("open").listen((dynamic _) {
+      debugPrint('PeerService: connection opened, sending invite');
+      newConnection.send(jsonEncode({
         "type": "invite",
         "from": AuthService().currentUserId,
       }));
     });
 
-    // Store reference to connection before attaching listener
-    final conn = _connection;
-    if (conn != null) {
-      // Single data listener on outgoing connection
-      conn.on("data").listen((dynamic data) {
-        debugPrint('PeerService: data received on invite connection: $data');
-        _handleIncomingData(data, conn);
-      });
+    // Set up all listeners on the captured connection reference
+    newConnection.on("data").listen((dynamic data) {
+      debugPrint('PeerService: data received on invite connection: $data');
+      _handleIncomingData(data, newConnection);
+    });
 
-      conn.on("close").listen((dynamic _) {
-        debugPrint('PeerService: connection closed');
-        if (status != PeerStatus.idle) _triggerDisconnect();
-      });
+    newConnection.on("close").listen((dynamic _) {
+      debugPrint('PeerService: connection closed');
+      if (status != PeerStatus.idle) _triggerDisconnect();
+    });
 
-      conn.on("error").listen((dynamic _) {
-        debugPrint('PeerService: connection error');
-        if (status != PeerStatus.idle) _triggerDisconnect();
-      });
-    }
+    newConnection.on("error").listen((dynamic err) {
+      debugPrint('PeerService: connection error: $err');
+      if (status != PeerStatus.idle) _triggerDisconnect();
+    });
+
+    // NOW assign to _connection after listeners are attached
+    _connection = newConnection;
   }
 
   void acceptInvite(String senderId) {

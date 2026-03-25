@@ -102,10 +102,14 @@ class _GameBoardScreenState extends State<GameBoardScreen>
   void _onTileTap(int index) {
     final gs = context.read<GameState>();
     final settings = context.read<SettingsState>();
+    debugPrint('_onTileTap: index=$index, gameOver=${gs.gameOver}, isMultiplayer=${gs.isMultiplayer}, isMyTurn=${gs.isMyTurn}, currentPlayer=${gs.currentPlayer}, mySign=${gs.mySign}');
     if (gs.gameOver) return;
 
     // Block input if not my turn in multiplayer
-    if (gs.isMultiplayer && !gs.isMyTurn) return;
+    if (gs.isMultiplayer && !gs.isMyTurn) {
+      debugPrint('_onTileTap: BLOCKED - not my turn');
+      return;
+    }
     
     // Fix: only block for AI if NOT in multiplayer
     if (!gs.isMultiplayer && widget.vsAI && gs.currentPlayer == 'O') return;

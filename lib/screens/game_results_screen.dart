@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
@@ -19,6 +20,7 @@ class _GameResultsScreenState extends State<GameResultsScreen>
   late Animation<double> _scaleAnim;
   late Animation<double> _fadeAnim;
   bool _navigating = false;
+  StreamSubscription<String>? _eventSub;
 
   @override
   void initState() {
@@ -37,7 +39,24 @@ class _GameResultsScreenState extends State<GameResultsScreen>
     // If opponent resets the board, navigate back to game automatically.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      context.read<GameState>().addListener(_onGameStateChanged);
+      final gs = context.read<GameState>();
+      gs.addListener(_onGameStateChanged);
+      
+      _eventSub = gs.eventStream.listen((event) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(event),
+            duration: const Duration(seconds: 3),
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        if (event == 'Opponent left the match') {
+          gs.resetAll();
+          context.go('/lobby');
+        }
+      });
     });
   }
 
@@ -53,6 +72,7 @@ class _GameResultsScreenState extends State<GameResultsScreen>
 
   @override
   void dispose() {
+    _eventSub?.cancel();
     try { context.read<GameState>().removeListener(_onGameStateChanged); } catch (_) {}
     _ctrl.dispose();
     super.dispose();

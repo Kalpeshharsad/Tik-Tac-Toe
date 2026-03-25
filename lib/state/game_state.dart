@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:async';
 import 'package:kinetic_tictactoe/services/peer_service.dart';
 
 /// Tracks whose turn it is, board state, scores, win detection.
@@ -22,6 +23,16 @@ class GameState extends ChangeNotifier {
 
   // Timer
   int _elapsedSeconds = 0;
+
+  // Event stream for UI notifications
+  final _eventController = StreamController<String>.broadcast();
+  Stream<String> get eventStream => _eventController.stream;
+
+  @override
+  void dispose() {
+    _eventController.close();
+    super.dispose();
+  }
 
   // ── Getters ──────────────────────────────────────────────────────────────
   List<String?> get board => List.unmodifiable(_board);
@@ -105,6 +116,14 @@ class GameState extends ChangeNotifier {
         _gameOver = false;
         _moveCount = 0;
         _elapsedSeconds = 0;
+        _eventController.add('Opponent restarted the game');
+        notifyListeners();
+      } else if (data['type'] == 'quit') {
+        // Opponent explicitly quit the match
+        PeerService().endMatch(broadcast: false);
+        _isMultiplayer = false;
+        _mySign = null;
+        _eventController.add('Opponent left the match');
         notifyListeners();
       }
     };

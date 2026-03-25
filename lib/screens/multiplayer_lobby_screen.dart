@@ -53,7 +53,7 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen> {
     if (targetId == AuthService().currentUserId) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('You cannot invite yourself.'),
+          content: const Text('You cannot invite yourself.'),
           backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
@@ -169,7 +169,7 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen> {
                   onPressed: () {
                     Clipboard.setData(ClipboardData(text: myId));
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('ID copied to clipboard'), duration: const Duration(seconds: 2)),
+                      const SnackBar(content: Text('ID copied to clipboard'), duration: Duration(seconds: 2)),
                     );
                   },
                 ),
@@ -338,7 +338,7 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen> {
               ],
             ),
           );
-        }).toList(),
+        }),
       ],
     );
   }  // end _buildPendingInvitesList

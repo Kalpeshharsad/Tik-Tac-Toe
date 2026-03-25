@@ -1,3 +1,5 @@
+rootProject.name = "kinetic_tictactoe_android"
+
 pluginManagement {
     val flutterSdkPath =
         run {

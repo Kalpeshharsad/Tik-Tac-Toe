@@ -105,6 +105,15 @@ class PeerService extends ChangeNotifier {
         payload = jsonDecode(raw) as Map<String, dynamic>;
       } else if (raw is Map) {
         payload = Map<String, dynamic>.from(raw);
+      } else if (raw is List) {
+        // On some platforms (iOS -> Android), text arrives as byte arrays
+        try {
+          final str = utf8.decode(raw.cast<int>());
+          payload = jsonDecode(str) as Map<String, dynamic>;
+        } catch (e) {
+          debugPrint('PeerJS binary decode error: $e');
+          return;
+        }
       } else {
         return;
       }
@@ -249,7 +258,10 @@ class PeerService extends ChangeNotifier {
   }
 
   /// End only the active match — keep peer alive for future invites
-  void endMatch() {
+  void endMatch({bool broadcast = true}) {
+    if (broadcast) {
+      sendMessage({'type': 'quit'});
+    }
     final wasConnected = status == PeerStatus.connected;
     if (wasConnected && _connection != null) {
       try { _connection!.close(); } catch (_) {}

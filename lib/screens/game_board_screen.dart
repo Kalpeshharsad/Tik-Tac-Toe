@@ -26,6 +26,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
     with SingleTickerProviderStateMixin {
   Timer? _timer;
   Timer? _aiTimer;
+  StreamSubscription<String>? _eventSub;
 
   // Win line animation
   late AnimationController _winCtrl;
@@ -49,7 +50,24 @@ class _GameBoardScreenState extends State<GameBoardScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _startTimer();
       // Listen for remote/AI game-over to trigger navigation
-      context.read<GameState>().addListener(_onGameStateChanged);
+      final gs = context.read<GameState>();
+      gs.addListener(_onGameStateChanged);
+      
+      _eventSub = gs.eventStream.listen((event) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(event),
+            duration: const Duration(seconds: 3),
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        if (event == 'Opponent left the match') {
+          gs.resetAll();
+          context.go('/lobby');
+        }
+      });
     });
   }
 
@@ -72,6 +90,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
 
   @override
   void dispose() {
+    _eventSub?.cancel();
     _timer?.cancel();
     _aiTimer?.cancel();
     _winCtrl.dispose();

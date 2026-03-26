@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:kinetic_tictactoe/theme/app_theme.dart';
 import 'package:kinetic_tictactoe/state/game_state.dart';
@@ -9,9 +10,40 @@ import 'package:kinetic_tictactoe/state/settings_state.dart';
 import 'package:kinetic_tictactoe/services/auth_service.dart';
 import 'package:kinetic_tictactoe/services/peer_service.dart';
 import 'package:kinetic_tictactoe/widgets/global_invite_overlay.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:kinetic_tictactoe/services/notification_service.dart';
+
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  debugPrint("Handling a background message: ${message.messageId}");
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Firebase with error handling for when config files are missing
+  try {
+    await Firebase.initializeApp();
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    
+    // Connect to Firestore emulator if in debug mode
+    if (kDebugMode) {
+      try {
+        FirebaseFirestore.instance.useFirestoreEmulator('127.0.0.1', 8080);
+        debugPrint('Connected to Firestore Emulator at 127.0.0.1:8080');
+      } catch (e) {
+        debugPrint('Failed to connect to Firestore Emulator: $e');
+      }
+    }
+    
+    await NotificationService().init();
+  } catch (e) {
+    debugPrint('Firebase initialization failed: $e');
+    debugPrint('Ensure google-services.json and GoogleService-Info.plist are provided.');
+  }
 
   await AuthService().init();
   PeerService().initPeer();

@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:peerdart/peerdart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:kinetic_tictactoe/services/auth_service.dart';
+import 'package:kinetic_tictactoe/services/notification_service.dart';
 
 enum PeerStatus { idle, connecting, connected }
 
@@ -165,6 +166,13 @@ class PeerService extends ChangeNotifier {
     isHost = true;
     status = PeerStatus.connecting;
     _saveContact(targetUserId);
+    
+    // Trigger push notification for recipient
+    NotificationService().sendInviteNotification(
+      targetUserId, 
+      AuthService().currentUserId ?? 'Someone'
+    );
+    
     notifyListeners();
 
     final newConnection = _peer!.connect('kinetic_$targetUserId');

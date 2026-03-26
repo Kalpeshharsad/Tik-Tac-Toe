@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:kinetic_tictactoe/services/peer_service.dart';
 
 class AuthService extends ChangeNotifier {
   static final AuthService _instance = AuthService._internal();
@@ -13,6 +14,9 @@ class AuthService extends ChangeNotifier {
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     _currentUserId = prefs.getString('auth_user_id');
+    if (isAuthenticated) {
+      PeerService().initPeer();
+    }
     notifyListeners();
   }
 
@@ -21,13 +25,15 @@ class AuthService extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('auth_user_id', userId);
     _currentUserId = userId;
+    PeerService().initPeer();
     notifyListeners();
     return true;
   }
 
   Future<bool> register(String userId, String password) async {
     // Mock register
-    return await login(userId, password);
+    final result = await login(userId, password);
+    return result;
   }
 
   Future<void> logout() async {

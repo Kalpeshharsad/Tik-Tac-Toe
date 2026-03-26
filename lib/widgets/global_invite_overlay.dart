@@ -32,10 +32,12 @@ class _GlobalInviteOverlayState extends State<GlobalInviteOverlay> {
   }
 
   void _onPeerUpdate() {
+    debugPrint('GlobalInviteOverlay: Peer updated, pending: ${PeerService().pendingInvites.length}');
     if (mounted) setState(() {});
   }
 
   void _onConnectionEstablished() {
+    debugPrint('GlobalInviteOverlay: Connection established!');
     if (!mounted) return;
     
     // We need to use the router properly to navigate
@@ -56,6 +58,10 @@ class _GlobalInviteOverlayState extends State<GlobalInviteOverlay> {
   Widget build(BuildContext context) {
     final svc = PeerService();
     final invites = svc.pendingInvites.keys.toList();
+    
+    if (invites.isNotEmpty) {
+      debugPrint('GlobalInviteOverlay: Building with ${invites.length} invites');
+    }
 
     return Stack(
       textDirection: TextDirection.ltr,

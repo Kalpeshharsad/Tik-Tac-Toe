@@ -7,8 +7,6 @@ import 'package:kinetic_tictactoe/widgets/kinetic_app_bar.dart';
 import 'package:kinetic_tictactoe/widgets/bottom_nav_bar.dart';
 import 'package:kinetic_tictactoe/services/peer_service.dart';
 import 'package:kinetic_tictactoe/services/auth_service.dart';
-import 'package:provider/provider.dart';
-import 'package:kinetic_tictactoe/state/game_state.dart';
 
 class MultiplayerLobbyScreen extends StatefulWidget {
   const MultiplayerLobbyScreen({super.key});
@@ -25,29 +23,6 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen> {
     super.initState();
     // Ensure PeerService is initialized
     PeerService().initPeer();
-    
-    // Listen for connection establishment to transition to game
-    PeerService().onConnectionEstablished = _onConnectionEstablished;
-  }
-
-  void _onConnectionEstablished() {
-    if (!mounted) return;
-    final svc = PeerService();
-    final gameState = context.read<GameState>();
-
-    debugPrint('Lobby: _onConnectionEstablished called, isHost=${svc.isHost}');
-
-    // If I am the host (I sent the invite), setup as X.
-    // If guest (I received and accepted), setup as O.
-    if (svc.isHost) {
-      debugPrint('Lobby: setting up as host with X');
-      gameState.setupMultiplayer('X');
-    } else {
-      debugPrint('Lobby: setting up as guest with O');
-      gameState.setupMultiplayer('O');
-    }
-
-    context.go('/play?vsAI=false');
   }
 
   void _sendInvite() {
@@ -70,7 +45,6 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen> {
 
   @override
   void dispose() {
-    PeerService().onConnectionEstablished = null;
     _searchCtrl.dispose();
     super.dispose();
   }
@@ -102,12 +76,6 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen> {
                     // Search and Invite
                     _buildSearchCard(svc, colorScheme),
                     const SizedBox(height: 32),
-
-                    // Pending Invites list
-                    if (svc.pendingInvites.isNotEmpty) ...[
-                      _buildPendingInvitesList(svc, colorScheme),
-                      const SizedBox(height: 32),
-                    ],
 
                     // Saved Contacts
                     if (svc.savedContacts.isNotEmpty)
@@ -275,78 +243,7 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen> {
     );
   }
 
-  Widget _buildPendingInvitesList(PeerService svc, ColorScheme colors) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'PENDING INVITES',
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 10,
-            fontWeight: FontWeight.w700,
-            color: colors.onSurfaceVariant,
-            letterSpacing: 2,
-          ),
-        ),
-        const SizedBox(height: 16),
-        ...svc.pendingInvites.keys.map((senderId) {
-          return Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: colors.primaryContainer.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(KRadius.md),
-              border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 40, height: 40,
-                  decoration: BoxDecoration(
-                    color: colors.primary.withValues(alpha: 0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: Text(
-                      senderId.substring(0, 1).toUpperCase(),
-                      style: GoogleFonts.plusJakartaSans(
-                        fontWeight: FontWeight.bold,
-                        color: colors.primary,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    senderId,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      color: colors.onSurface,
-                    ),
-                  ),
-                ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.close_rounded, color: colors.error),
-                      onPressed: () => svc.declineInvite(senderId),
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.check_rounded, color: colors.primary),
-                      onPressed: () => svc.acceptInvite(senderId),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          );
-        }),
-      ],
-    );
-  }  // end _buildPendingInvitesList
+  // end _buildPendingInvitesList
 
   Widget _buildSavedContacts(PeerService svc, ColorScheme colors) {
     return Column(

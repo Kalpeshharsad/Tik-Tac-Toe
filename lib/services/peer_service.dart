@@ -129,6 +129,7 @@ class PeerService extends ChangeNotifier {
       final senderId = payload['from'] as String?;
       if (senderId != null && status != PeerStatus.connected) {
         pendingInvites[senderId] = sourceConn;
+        _saveContact(senderId);
         notifyListeners();
       }
     } else if (type == 'invite_response') {
@@ -139,11 +140,9 @@ class PeerService extends ChangeNotifier {
         _saveContact(outgoingInviteTo!);
         outgoingInviteTo = null;
         status = PeerStatus.connected;
-        // Extract the guest's sign from the response
-        final guestSign = payload['mySign'] as String?;
         notifyListeners();
         if (onConnectionEstablished != null) {
-          onConnectionEstablished!();  // TODO: pass guestSign
+          onConnectionEstablished!();
         }
       } else {
         outgoingInviteTo = null;
@@ -165,6 +164,7 @@ class PeerService extends ChangeNotifier {
     outgoingInviteTo = targetUserId;
     isHost = true;
     status = PeerStatus.connecting;
+    _saveContact(targetUserId);
     notifyListeners();
 
     final newConnection = _peer!.connect('kinetic_$targetUserId');
@@ -206,7 +206,7 @@ class PeerService extends ChangeNotifier {
 
     // Determine our sign BEFORE sending response
     // We are NOT host, so we are 'O' (host is always 'X')
-    final mySign = 'O';
+    const mySign = 'O';
 
     conn.send(jsonEncode({
       "type": "invite_response",

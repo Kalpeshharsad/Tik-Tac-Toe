@@ -202,6 +202,20 @@ class _GameBoardScreenState extends State<GameBoardScreen>
     final isXTurn = gs.currentPlayer == 'X' && !gs.gameOver;
     final isOTurn = gs.currentPlayer == 'O' && !gs.gameOver;
 
+    String xTitle, oTitle;
+    if (gs.isMultiplayer) {
+      if (gs.mySign == 'X') {
+        xTitle = isXTurn ? 'YOUR TURN (X)' : 'YOU (X)';
+        oTitle = isOTurn ? "OPPONENT'S TURN" : 'OPPONENT (O)';
+      } else {
+        xTitle = isXTurn ? "OPPONENT'S TURN" : 'OPPONENT (X)';
+        oTitle = isOTurn ? 'YOUR TURN (O)' : 'YOU (O)';
+      }
+    } else {
+      xTitle = isXTurn ? 'PLAYER 1 (TURN)' : 'PLAYER 1';
+      oTitle = isOTurn ? (widget.vsAI ? "AI'S TURN" : 'PLAYER 2 (TURN)') : (widget.vsAI ? 'KINETIC AI' : 'PLAYER 2');
+    }
+
     return Row(
       children: [
         // Player 1 (X)
@@ -241,7 +255,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'PLAYER 1',
+                        xTitle,
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
@@ -325,7 +339,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      isOTurn ? 'YOUR TURN' : (gs.isMultiplayer ? 'OPPONENT' : (widget.vsAI ? 'KINETIC AI' : 'PLAYER 2')),
+                      oTitle,
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,

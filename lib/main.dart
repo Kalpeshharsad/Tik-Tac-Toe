@@ -8,6 +8,7 @@ import 'package:kinetic_tictactoe/router/app_router.dart';
 import 'package:kinetic_tictactoe/state/settings_state.dart';
 import 'package:kinetic_tictactoe/services/auth_service.dart';
 import 'package:kinetic_tictactoe/services/peer_service.dart';
+import 'package:kinetic_tictactoe/widgets/global_invite_overlay.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -50,9 +51,13 @@ class KineticApp extends StatelessWidget {
               settings.accentColor,
             ),
             routerConfig: appRouter,
+            builder: (context, child) {
+              return GlobalInviteOverlay(child: child!);
+            },
           );
         },
       ),
     );
   }
 }
+

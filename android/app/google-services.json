@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1049139814629",
+    "project_id": "kinetic-tic-tac-toe",
+    "storage_bucket": "kinetic-tic-tac-toe.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1049139814629:android:a52a3ed1a9e342bd41340c",
+        "android_client_info": {
+          "package_name": "com.kinetic.kineticTictactoe"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBT0aSfG9fo5GDH5eAxkEOqktkbmzzYRKU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

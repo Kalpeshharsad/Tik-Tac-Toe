@@ -139,8 +139,12 @@ class PeerService extends ChangeNotifier {
         _saveContact(outgoingInviteTo!);
         outgoingInviteTo = null;
         status = PeerStatus.connected;
+        // Extract the guest's sign from the response
+        final guestSign = payload['mySign'] as String?;
         notifyListeners();
-        if (onConnectionEstablished != null) onConnectionEstablished!();
+        if (onConnectionEstablished != null) {
+          onConnectionEstablished!();  // TODO: pass guestSign
+        }
       } else {
         outgoingInviteTo = null;
         _connection?.close();
@@ -171,6 +175,7 @@ class PeerService extends ChangeNotifier {
       newConnection.send(jsonEncode({
         "type": "invite",
         "from": AuthService().currentUserId,
+        "mySign": 'X',  // Host always plays X
       }));
     });
 
@@ -199,9 +204,14 @@ class PeerService extends ChangeNotifier {
 
     final conn = pendingInvites[senderId]!;
 
+    // Determine our sign BEFORE sending response
+    // We are NOT host, so we are 'O' (host is always 'X')
+    final mySign = 'O';
+
     conn.send(jsonEncode({
       "type": "invite_response",
       "accepted": true,
+      "mySign": mySign,  // Tell the host what sign we are
     }));
 
     isHost = false;

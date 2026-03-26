@@ -34,14 +34,19 @@ class _MultiplayerLobbyScreenState extends State<MultiplayerLobbyScreen> {
     if (!mounted) return;
     final svc = PeerService();
     final gameState = context.read<GameState>();
-    
+
+    debugPrint('Lobby: _onConnectionEstablished called, isHost=${svc.isHost}');
+
     // If I am the host (I sent the invite), setup as X.
+    // If guest (I received and accepted), setup as O.
     if (svc.isHost) {
+      debugPrint('Lobby: setting up as host with X');
       gameState.setupMultiplayer('X');
     } else {
+      debugPrint('Lobby: setting up as guest with O');
       gameState.setupMultiplayer('O');
     }
-    
+
     context.go('/play?vsAI=false');
   }
 

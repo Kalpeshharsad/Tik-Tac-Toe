@@ -167,11 +167,15 @@ class PeerService extends ChangeNotifier {
     status = PeerStatus.connecting;
     _saveContact(targetUserId);
     
-    // Trigger push notification for recipient
-    NotificationService().sendInviteNotification(
-      targetUserId, 
-      AuthService().currentUserId ?? 'Someone'
-    );
+    // Trigger push notification for recipient (wrap in try/catch so it never breaks P2P)
+    try {
+      NotificationService().sendInviteNotification(
+        targetUserId, 
+        AuthService().currentUserId ?? 'Someone'
+      );
+    } catch (e) {
+      debugPrint('Failed to send push notification: $e');
+    }
     
     notifyListeners();
 

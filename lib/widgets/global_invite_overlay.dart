@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:kinetic_tictactoe/services/peer_service.dart';
 import 'package:kinetic_tictactoe/theme/app_theme.dart';
 import 'package:kinetic_tictactoe/state/game_state.dart';
-import 'package:go_router/go_router.dart';
+import 'package:kinetic_tictactoe/router/app_router.dart';
 import 'package:provider/provider.dart';
 
 class GlobalInviteOverlay extends StatefulWidget {
@@ -40,7 +40,6 @@ class _GlobalInviteOverlayState extends State<GlobalInviteOverlay> {
     debugPrint('GlobalInviteOverlay: Connection established!');
     if (!mounted) return;
     
-    // We need to use the router properly to navigate
     final svc = PeerService();
     final gameState = context.read<GameState>();
 
@@ -50,8 +49,8 @@ class _GlobalInviteOverlayState extends State<GlobalInviteOverlay> {
       gameState.setupMultiplayer('O');
     }
 
-    // Go to game board
-    GoRouter.of(context).go('/play?vsAI=false');
+    // Go to game board using the global router instance
+    appRouter.go('/play?vsAI=false');
   }
 
   @override

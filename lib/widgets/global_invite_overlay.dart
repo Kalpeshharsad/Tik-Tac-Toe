@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kinetic_tictactoe/services/peer_service.dart';
 import 'package:kinetic_tictactoe/theme/app_theme.dart';
@@ -32,7 +33,14 @@ class _GlobalInviteOverlayState extends State<GlobalInviteOverlay> {
   }
 
   void _onPeerUpdate() {
-    debugPrint('GlobalInviteOverlay: Peer updated, pending: ${PeerService().pendingInvites.length}');
+    final svc = PeerService();
+    debugPrint('GlobalInviteOverlay: Peer updated, pending: ${svc.pendingInvites.length}');
+    
+    // Vibrate if a new invite arrived
+    if (svc.pendingInvites.isNotEmpty) {
+      HapticFeedback.vibrate();
+    }
+    
     if (mounted) setState(() {});
   }
 

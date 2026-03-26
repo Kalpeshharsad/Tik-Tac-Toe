@@ -24,14 +24,11 @@ class NotificationService {
       debugPrint('User granted notification permissions');
     }
 
-    // Get the token
-    String? token = await _fcm.getToken();
-    if (token != null) {
-      await _saveTokenToFirestore(token);
-    }
+    // Get the token and save it
+    await uploadToken();
 
     // Listen to token refresh
-    _fcm.onTokenRefresh.listen(_saveTokenToFirestore);
+    _fcm.onTokenRefresh.listen((token) => uploadToken());
 
     // Handle messages when app is in foreground
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
@@ -60,16 +57,24 @@ class NotificationService {
     }
   }
 
-  Future<void> _saveTokenToFirestore(String token) async {
-    final userId = AuthService().currentUserId;
-    if (userId == null) return;
+  Future<void> uploadToken() async {
+    try {
+      String? token = await _fcm.getToken();
+      if (token == null) return;
 
-    await _firestore.collection('users').doc(userId).set({
-      'fcmToken': token,
-      'lastUpdated': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
-    
-    debugPrint('FCM Token saved for user $userId');
+      final userId = AuthService().currentUserId;
+      if (userId == null) return;
+
+      await _firestore.collection('users').doc(userId).set({
+        'fcmToken': token,
+        'lastUpdated': FieldValue.serverTimestamp(),
+        'platform': defaultTargetPlatform.toString(),
+      }, SetOptions(merge: true));
+      
+      debugPrint('FCM Token uploaded for user $userId');
+    } catch (e) {
+      debugPrint('Error uploading FCM token: $e');
+    }
   }
 
   /// Sends a push notification request by writing to a Firestore collection.

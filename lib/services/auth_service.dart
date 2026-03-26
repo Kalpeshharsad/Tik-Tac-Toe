@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:kinetic_tictactoe/services/peer_service.dart';
+import 'package:kinetic_tictactoe/services/notification_service.dart';
 
 class AuthService extends ChangeNotifier {
   static final AuthService _instance = AuthService._internal();
@@ -16,6 +17,7 @@ class AuthService extends ChangeNotifier {
     _currentUserId = prefs.getString('auth_user_id');
     if (isAuthenticated) {
       PeerService().initPeer();
+      NotificationService().uploadToken();
     }
     notifyListeners();
   }
@@ -26,6 +28,7 @@ class AuthService extends ChangeNotifier {
     await prefs.setString('auth_user_id', userId);
     _currentUserId = userId;
     PeerService().initPeer();
+    NotificationService().uploadToken();
     notifyListeners();
     return true;
   }

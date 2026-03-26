@@ -1,116 +1,123 @@
-import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:onesignal_flutter/onesignal_flutter.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:kinetic_tictactoe/services/auth_service.dart';
 import 'package:kinetic_tictactoe/router/app_router.dart';
+import 'dart:io';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
   NotificationService._internal();
 
-  final FirebaseMessaging _fcm = FirebaseMessaging.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
+
+  static const String _oneSignalAppId = "2fa14c8e-e15b-4e42-b29b-7db77ea0689d";
 
   Future<void> init() async {
-    // Request permission for iOS/Android 13+
-    try {
-      await _fcm.requestPermission(
-        alert: true,
-        badge: true,
-        sound: true,
-        provisional: false,
-      ).timeout(const Duration(seconds: 8));
-      debugPrint('FCM permissions handled');
-    } catch (e) {
-      debugPrint('FCM permission request failed or timed out: $e');
-    }
-
-    // Don't await uploadToken here to avoid blocking app startup
-    uploadToken();
-
-    // Listen to token refresh
-    _fcm.onTokenRefresh.listen((token) {
-      debugPrint('FCM Token refreshed: $token');
-      uploadToken();
-    });
-
-    // Handle messages when app is in foreground
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      debugPrint('Foreground message received: ${message.notification?.title}');
-    });
-
-    // Handle message when app is opened from notification
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      _handleNotificationClick(message);
-    });
-
-    // Check if app was opened from a terminated state via notification
-    _fcm.getInitialMessage().then((initialMessage) {
-      if (initialMessage != null) {
-        _handleNotificationClick(initialMessage);
-      }
-    });
-  }
-
-  void _handleNotificationClick(RemoteMessage message) {
-    final type = message.data['type'];
-    debugPrint('Handling notification click of type: $type');
+    // Initialize Local Notifications (Fallback for iOS/Terminated apps)
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const DarwinInitializationSettings initializationSettingsDarwin =
+        DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+    );
+    const InitializationSettings initializationSettings = InitializationSettings(
+      android: initializationSettingsAndroid,
+      iOS: initializationSettingsDarwin,
+    );
     
-    if (type == 'invite') {
-      // Navigate to lobby to see the invite
-      // Ensure we are not already on the lobby or in a game
-      appRouter.push('/lobby');
+    await _localNotifications.initialize(
+      initializationSettings,
+      onDidReceiveNotificationResponse: (details) {
+        // Handle click on local notification
+        appRouter.push('/lobby');
+      },
+    );
+
+    // Initial ID Sync if already logged in (Don't await to avoid blocking)
+    syncPlayerId();
+
+    // OneSignal is only for Android in this setup (or iOS with dev account)
+    if (Platform.isAndroid) {
+      OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
+      OneSignal.initialize(_oneSignalAppId);
+      OneSignal.Notifications.requestPermission(true);
+
+      OneSignal.Notifications.addClickListener((event) {
+        _handleNotificationClick(event.notification);
+      });
+    } else if (Platform.isIOS) {
+      // For iOS without Dev Account, we rely entirely on Local Notifications 
+      // triggered via the PeerService (WebRTC) channel.
+      debugPrint('iOS: Relying on Local Notifications fallback');
     }
   }
 
-  Future<void> uploadToken() async {
-    try {
-      final userId = AuthService().currentUserId;
-      if (userId == null) return;
+  Future<void> syncPlayerId() async {
+    final userId = AuthService().currentUserId;
+    if (userId == null) return;
 
-      String? fcmToken;
-      
-      if (defaultTargetPlatform == TargetPlatform.iOS) {
-        // Must fetch APNS token first on iOS
-        final apnsToken = await _fcm.getAPNSToken().timeout(
-          const Duration(seconds: 5),
-          onTimeout: () => null,
-        );
-        debugPrint('iOS APNS Token: $apnsToken');
+    if (Platform.isAndroid) {
+      try {
+        await OneSignal.login(userId).timeout(const Duration(seconds: 5));
+        debugPrint('Logged into OneSignal as $userId');
+      } catch (e) {
+        debugPrint('OneSignal login failed: $e');
       }
-      
-      // Get main FCM token
-      fcmToken = await _fcm.getToken().timeout(
-        const Duration(seconds: 10),
-        onTimeout: () => null,
-      );
-      
-      if (fcmToken == null) {
-        debugPrint('FCM Token retrieval timed out or failed. Will retry later.');
-        return;
-      }
-
-      await _firestore.collection('users').doc(userId).set({
-        'fcmToken': fcmToken,
-        'lastUpdated': FieldValue.serverTimestamp(),
-        'platform': defaultTargetPlatform.toString().split('.').last,
-      }, SetOptions(merge: true));
-      
-      debugPrint('FCM Token synced for user $userId');
-    } catch (e) {
-      debugPrint('Error in uploadToken: $e');
     }
   }
 
-  /// Sends a push notification request by writing to a Firestore collection.
-  /// This assumes a Cloud Function is listening to this collection to actually send the push.
+  void _handleNotificationClick(OSNotification notification) {
+    debugPrint('OneSignal notification clicked');
+    appRouter.push('/lobby');
+  }
+
+  /// Triggers a local popup notification.
+  /// Used for iOS fallback when an invite is received via WebRTC.
+  Future<void> showLocalNotification({required String title, required String body}) async {
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+        AndroidNotificationDetails(
+      'kinetic_invites',
+      'Game Invites',
+      importance: Importance.max,
+      priority: Priority.high,
+      showWhen: true,
+    );
+    const DarwinNotificationDetails darwinPlatformChannelSpecifics =
+        DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+    const NotificationDetails platformChannelSpecifics = NotificationDetails(
+      android: androidPlatformChannelSpecifics,
+      iOS: darwinPlatformChannelSpecifics,
+    );
+    
+    await _localNotifications.show(
+      0,
+      title,
+      body,
+      platformChannelSpecifics,
+    );
+  }
+
   Future<void> sendInviteNotification(String targetUserId, String fromUsername) async {
+    // Write to Firestore so we have a record. 
+    // This could also trigger a Cloud Function if you ever upgrade to Blaze.
     await _firestore.collection('notifications').add({
       'to': targetUserId,
       'from': fromUsername,
       'type': 'invite',
       'createdAt': FieldValue.serverTimestamp(),
+      'provider': 'onesignal',
     });
+    
+    debugPrint('Invite notification record created for $targetUserId');
   }
 }

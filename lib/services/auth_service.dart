@@ -17,7 +17,7 @@ class AuthService extends ChangeNotifier {
     _currentUserId = prefs.getString('auth_user_id');
     if (isAuthenticated) {
       PeerService().initPeer();
-      NotificationService().uploadToken();
+      NotificationService().syncPlayerId();
     }
     notifyListeners();
   }
@@ -28,7 +28,7 @@ class AuthService extends ChangeNotifier {
     await prefs.setString('auth_user_id', userId);
     _currentUserId = userId;
     PeerService().initPeer();
-    NotificationService().uploadToken();
+    NotificationService().syncPlayerId();
     notifyListeners();
     return true;
   }

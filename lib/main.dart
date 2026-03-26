@@ -11,15 +11,8 @@ import 'package:kinetic_tictactoe/services/auth_service.dart';
 import 'package:kinetic_tictactoe/services/peer_service.dart';
 import 'package:kinetic_tictactoe/widgets/global_invite_overlay.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:kinetic_tictactoe/services/notification_service.dart';
-
-@pragma('vm:entry-point')
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp();
-  debugPrint("Handling a background message: ${message.messageId}");
-}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,7 +20,6 @@ void main() async {
   // Initialize Firebase with error handling for when config files are missing
   try {
     await Firebase.initializeApp();
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
     
     // Connect to Firestore emulator if in debug mode
     if (kDebugMode) {

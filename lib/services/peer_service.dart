@@ -131,6 +131,14 @@ class PeerService extends ChangeNotifier {
       if (senderId != null && status != PeerStatus.connected) {
         pendingInvites[senderId] = sourceConn;
         _saveContact(senderId);
+        
+        // Trigger a local notification so the user sees it if they are on another screen 
+        // or the app is backgrounded (if process is still alive).
+        NotificationService().showLocalNotification(
+          title: 'New Game Invite!',
+          body: '$senderId has invited you to a match.',
+        );
+        
         notifyListeners();
       }
     } else if (type == 'invite_response') {

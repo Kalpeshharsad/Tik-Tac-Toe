@@ -18,60 +18,89 @@ class NotificationService {
       alert: true,
       badge: true,
       sound: true,
+      provisional: false,
     );
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
       debugPrint('User granted notification permissions');
+    } else if (settings.authorizationStatus == AuthorizationStatus.provisional) {
+      debugPrint('User granted provisional notification permissions');
+    } else {
+      debugPrint('User declined or has not accepted notification permissions');
     }
 
-    // Get the token and save it
+    // Get the initial token and save it
     await uploadToken();
 
     // Listen to token refresh
-    _fcm.onTokenRefresh.listen((token) => uploadToken());
+    _fcm.onTokenRefresh.listen((token) {
+      debugPrint('FCM Token refreshed: $token');
+      uploadToken();
+    });
 
     // Handle messages when app is in foreground
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       debugPrint('Foreground message received: ${message.notification?.title}');
-      // We can trigger a local notification or show a dialog here
+      debugPrint('Payload: ${message.data}');
+      // In-app logic is handled via P2P in PeerService, 
+      // but we could show a snackbar or dialog here if needed.
     });
 
     // Handle message when app is opened from notification
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      debugPrint('App opened from notification: ${message.data}');
+      debugPrint('App opened from notification in background: ${message.data}');
       _handleNotificationClick(message);
     });
 
     // Check if app was opened from a terminated state via notification
     RemoteMessage? initialMessage = await _fcm.getInitialMessage();
     if (initialMessage != null) {
+      debugPrint('App opened from notification in terminated state: ${initialMessage.data}');
       _handleNotificationClick(initialMessage);
     }
   }
 
   void _handleNotificationClick(RemoteMessage message) {
-    if (message.data['type'] == 'invite') {
+    final type = message.data['type'];
+    debugPrint('Handling notification click of type: $type');
+    
+    if (type == 'invite') {
       // Navigate to lobby to see the invite
-      // We use the global appRouter for navigation
-      appRouter.go('/lobby');
+      // Ensure we are not already on the lobby or in a game
+      appRouter.push('/lobby');
     }
   }
 
   Future<void> uploadToken() async {
     try {
-      String? token = await _fcm.getToken();
-      if (token == null) return;
+      String? token;
+      if (defaultTargetPlatform == TargetPlatform.iOS) {
+        token = await _fcm.getAPNSToken();
+        debugPrint('APNS Token: $token');
+      }
+      
+      // Fallback/Standard FCM token
+      token = await _fcm.getToken();
+      
+      if (token == null) {
+        debugPrint('FCM Token is null, retrying in 5 seconds...');
+        Future.delayed(const Duration(seconds: 5), () => uploadToken());
+        return;
+      }
 
       final userId = AuthService().currentUserId;
-      if (userId == null) return;
+      if (userId == null) {
+        debugPrint('User ID is null, cannot upload token yet');
+        return;
+      }
 
       await _firestore.collection('users').doc(userId).set({
         'fcmToken': token,
         'lastUpdated': FieldValue.serverTimestamp(),
-        'platform': defaultTargetPlatform.toString(),
+        'platform': defaultTargetPlatform.toString().split('.').last,
       }, SetOptions(merge: true));
       
-      debugPrint('FCM Token uploaded for user $userId');
+      debugPrint('FCM Token uploaded for user $userId: $token');
     } catch (e) {
       debugPrint('Error uploading FCM token: $e');
     }
